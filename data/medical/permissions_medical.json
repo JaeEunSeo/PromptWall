@@ -1,0 +1,5985 @@
+{
+  "metadata": {
+    "project": "LLM SQL Agent with Role-Based Access Control",
+    "database": "synthea (healthcare / EHR)",
+    "description": "Synthea 합성 의료 데이터베이스에 대한 역할 기반 접근 제어(RBAC) 권한 정의. 각 역할은 테이블별·컬럼별 접근 권한과 행 수준 필터를 가짐. HIPAA(PHI), 개인정보(PII), 재무·청구 규제를 반영하여 최소권한·직무분리 원칙으로 설계.",
+    "tables": [
+      "patients",
+      "conditions",
+      "medications",
+      "procedures",
+      "observations",
+      "allergies",
+      "immunizations",
+      "careplans",
+      "devices",
+      "supplies",
+      "imaging_studies",
+      "encounters",
+      "claims",
+      "claims_transactions",
+      "payer_transitions",
+      "providers",
+      "organizations",
+      "payers"
+    ],
+    "supported_operations": [
+      "SELECT",
+      "INSERT",
+      "UPDATE",
+      "DELETE"
+    ],
+    "sensitivity_classification": {
+      "patients.legal_identifiers": [
+        "SSN",
+        "DRIVERS",
+        "PASSPORT"
+      ],
+      "patients.direct_identifiers": [
+        "SSN",
+        "DRIVERS",
+        "PASSPORT",
+        "PREFIX",
+        "FIRST",
+        "LAST",
+        "SUFFIX",
+        "MAIDEN",
+        "ADDRESS",
+        "ZIP",
+        "LAT",
+        "LON",
+        "BIRTHPLACE"
+      ],
+      "patients.quasi_identifiers": [
+        "BIRTHDATE",
+        "DEATHDATE",
+        "CITY",
+        "STATE",
+        "COUNTY",
+        "MARITAL",
+        "RACE",
+        "ETHNICITY",
+        "GENDER"
+      ],
+      "patients.financial": [
+        "HEALTHCARE_EXPENSES",
+        "HEALTHCARE_COVERAGE"
+      ],
+      "row_filter_placeholders": [
+        "{current_user_patient_id}",
+        "{current_user_provider_id}"
+      ],
+      "notes": "research_analyst는 날짜 연단위 일반화·우편번호 3자리 절단 등 HIPAA Safe Harbor 비식별 뷰를 통해 접근하는 것을 전제로 함."
+    }
+  },
+  "role_hierarchy": {
+    "description": "의료기관 조직 구조 기반 역할 계층. level 숫자가 낮을수록 높은 권한. 각 역할은 독립적으로 정의되며 상위 역할 권한을 자동 상속하지 않음.",
+    "levels": [
+      {
+        "level": 1,
+        "role": "system_admin",
+        "display_name": "시스템 관리자"
+      },
+      {
+        "level": 2,
+        "role": "privacy_officer",
+        "display_name": "개인정보보호책임자 / 준법감시인"
+      },
+      {
+        "level": 3,
+        "role": "hospital_director",
+        "display_name": "병원장 / 의료원장"
+      },
+      {
+        "level": 4,
+        "role": "attending_physician",
+        "display_name": "주치의 / 임상의사"
+      },
+      {
+        "level": 5,
+        "role": "nurse",
+        "display_name": "간호사"
+      },
+      {
+        "level": 6,
+        "role": "pharmacist",
+        "display_name": "약사"
+      },
+      {
+        "level": 7,
+        "role": "clinical_technician",
+        "display_name": "임상병리·영상 기사"
+      },
+      {
+        "level": 8,
+        "role": "medical_coder",
+        "display_name": "의료코딩·청구 담당"
+      },
+      {
+        "level": 9,
+        "role": "registration_clerk",
+        "display_name": "원무 / 접수"
+      },
+      {
+        "level": 10,
+        "role": "insurance_examiner",
+        "display_name": "보험심사역"
+      },
+      {
+        "level": 11,
+        "role": "research_analyst",
+        "display_name": "임상연구 · 데이터 분석가"
+      },
+      {
+        "level": 12,
+        "role": "external_auditor",
+        "display_name": "외부 회계 감사인"
+      },
+      {
+        "level": 13,
+        "role": "patient",
+        "display_name": "환자 본인"
+      }
+    ]
+  },
+  "roles": {
+    "system_admin": {
+      "role_name": "system_admin",
+      "display_name": "시스템 관리자 (Database Administrator)",
+      "description": "데이터베이스 전체에 대한 완전한 접근 권한. 스키마 관리, 정합성 유지, 백업·복구 등 모든 작업 수행. 환자 PII·임상·재무 데이터 전체 CRUD 가능.",
+      "level": 1,
+      "table_permissions": {
+        "patients": {
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE",
+            "DELETE"
+          ],
+          "allowed_columns": [
+            "Id",
+            "BIRTHDATE",
+            "DEATHDATE",
+            "SSN",
+            "DRIVERS",
+            "PASSPORT",
+            "PREFIX",
+            "FIRST",
+            "LAST",
+            "SUFFIX",
+            "MAIDEN",
+            "MARITAL",
+            "RACE",
+            "ETHNICITY",
+            "GENDER",
+            "BIRTHPLACE",
+            "ADDRESS",
+            "CITY",
+            "STATE",
+            "COUNTY",
+            "ZIP",
+            "LAT",
+            "LON",
+            "HEALTHCARE_EXPENSES",
+            "HEALTHCARE_COVERAGE"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "환자(개인식별정보 PII) — 전체 관리 (CRUD)"
+        },
+        "conditions": {
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE",
+            "DELETE"
+          ],
+          "allowed_columns": [
+            "START",
+            "STOP",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "진단 — 전체 관리 (CRUD)"
+        },
+        "medications": {
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE",
+            "DELETE"
+          ],
+          "allowed_columns": [
+            "START",
+            "STOP",
+            "PATIENT",
+            "PAYER",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "BASE_COST",
+            "PAYER_COVERAGE",
+            "DISPENSES",
+            "TOTALCOST",
+            "REASONCODE",
+            "REASONDESCRIPTION"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "투약/처방 — 전체 관리 (CRUD)"
+        },
+        "procedures": {
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE",
+            "DELETE"
+          ],
+          "allowed_columns": [
+            "START",
+            "STOP",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "BASE_COST",
+            "REASONCODE",
+            "REASONDESCRIPTION"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "시술 — 전체 관리 (CRUD)"
+        },
+        "observations": {
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE",
+            "DELETE"
+          ],
+          "allowed_columns": [
+            "DATE",
+            "PATIENT",
+            "ENCOUNTER",
+            "CATEGORY",
+            "CODE",
+            "DESCRIPTION",
+            "VALUE",
+            "UNITS",
+            "TYPE"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "관찰/검사결과 — 전체 관리 (CRUD)"
+        },
+        "allergies": {
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE",
+            "DELETE"
+          ],
+          "allowed_columns": [
+            "START",
+            "STOP",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "SYSTEM",
+            "DESCRIPTION",
+            "TYPE",
+            "CATEGORY",
+            "REACTION1",
+            "DESCRIPTION1",
+            "SEVERITY1",
+            "REACTION2",
+            "DESCRIPTION2",
+            "SEVERITY2"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "알레르기 — 전체 관리 (CRUD)"
+        },
+        "immunizations": {
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE",
+            "DELETE"
+          ],
+          "allowed_columns": [
+            "DATE",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "BASE_COST"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "예방접종 — 전체 관리 (CRUD)"
+        },
+        "careplans": {
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE",
+            "DELETE"
+          ],
+          "allowed_columns": [
+            "Id",
+            "START",
+            "STOP",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "REASONCODE",
+            "REASONDESCRIPTION"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "케어플랜 — 전체 관리 (CRUD)"
+        },
+        "devices": {
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE",
+            "DELETE"
+          ],
+          "allowed_columns": [
+            "START",
+            "STOP",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "UDI"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "의료기기 — 전체 관리 (CRUD)"
+        },
+        "supplies": {
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE",
+            "DELETE"
+          ],
+          "allowed_columns": [
+            "DATE",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "QUANTITY"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "의료용품 — 전체 관리 (CRUD)"
+        },
+        "imaging_studies": {
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE",
+            "DELETE"
+          ],
+          "allowed_columns": [
+            "Id",
+            "DATE",
+            "PATIENT",
+            "ENCOUNTER",
+            "SERIES_UID",
+            "BODYSITE_CODE",
+            "BODYSITE_DESCRIPTION",
+            "MODALITY_CODE",
+            "MODALITY_DESCRIPTION",
+            "INSTANCE_UID",
+            "SOP_CODE",
+            "SOP_DESCRIPTION",
+            "PROCEDURE_CODE"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "영상검사 — 전체 관리 (CRUD)"
+        },
+        "encounters": {
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE",
+            "DELETE"
+          ],
+          "allowed_columns": [
+            "Id",
+            "START",
+            "STOP",
+            "PATIENT",
+            "ORGANIZATION",
+            "PROVIDER",
+            "PAYER",
+            "ENCOUNTERCLASS",
+            "CODE",
+            "DESCRIPTION",
+            "BASE_ENCOUNTER_COST",
+            "TOTAL_CLAIM_COST",
+            "PAYER_COVERAGE",
+            "REASONCODE",
+            "REASONDESCRIPTION"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "내원 기록 — 전체 관리 (CRUD)"
+        },
+        "claims": {
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE",
+            "DELETE"
+          ],
+          "allowed_columns": [
+            "Id",
+            "PATIENTID",
+            "PROVIDERID",
+            "PRIMARYPATIENTINSURANCEID",
+            "SECONDARYPATIENTINSURANCEID",
+            "DEPARTMENTID",
+            "PATIENTDEPARTMENTID",
+            "DIAGNOSIS1",
+            "DIAGNOSIS2",
+            "DIAGNOSIS3",
+            "DIAGNOSIS4",
+            "DIAGNOSIS5",
+            "DIAGNOSIS6",
+            "DIAGNOSIS7",
+            "DIAGNOSIS8",
+            "REFERRINGPROVIDERID",
+            "APPOINTMENTID",
+            "CURRENTILLNESSDATE",
+            "SERVICEDATE",
+            "SUPERVISINGPROVIDERID",
+            "STATUS1",
+            "STATUS2",
+            "STATUSP",
+            "OUTSTANDING1",
+            "OUTSTANDING2",
+            "OUTSTANDINGP",
+            "LASTBILLEDDATE1",
+            "LASTBILLEDDATE2",
+            "LASTBILLEDDATEP",
+            "HEALTHCARECLAIMTYPEID1",
+            "HEALTHCARECLAIMTYPEID2"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "보험청구 — 전체 관리 (CRUD)"
+        },
+        "claims_transactions": {
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE",
+            "DELETE"
+          ],
+          "allowed_columns": [
+            "ID",
+            "CLAIMID",
+            "CHARGEID",
+            "PATIENTID",
+            "TYPE",
+            "AMOUNT",
+            "METHOD",
+            "FROMDATE",
+            "TODATE",
+            "PLACEOFSERVICE",
+            "PROCEDURECODE",
+            "MODIFIER1",
+            "MODIFIER2",
+            "DIAGNOSISREF1",
+            "DIAGNOSISREF2",
+            "DIAGNOSISREF3",
+            "DIAGNOSISREF4",
+            "UNITS",
+            "DEPARTMENTID",
+            "NOTES",
+            "UNITAMOUNT",
+            "TRANSFEROUTID",
+            "TRANSFERTYPE",
+            "PAYMENTS",
+            "ADJUSTMENTS",
+            "TRANSFERS",
+            "OUTSTANDING",
+            "APPOINTMENTID",
+            "LINENOTE",
+            "PATIENTINSURANCEID",
+            "FEESCHEDULEID",
+            "PROVIDERID",
+            "SUPERVISINGPROVIDERID"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "청구 거래내역 — 전체 관리 (CRUD)"
+        },
+        "payer_transitions": {
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE",
+            "DELETE"
+          ],
+          "allowed_columns": [
+            "PATIENT",
+            "MEMBERID",
+            "START_YEAR",
+            "END_YEAR",
+            "PAYER",
+            "SECONDARY_PAYER",
+            "OWNERSHIP",
+            "OWNERNAME"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "보험 가입이력 — 전체 관리 (CRUD)"
+        },
+        "providers": {
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE",
+            "DELETE"
+          ],
+          "allowed_columns": [
+            "Id",
+            "ORGANIZATION",
+            "NAME",
+            "GENDER",
+            "SPECIALITY",
+            "ADDRESS",
+            "CITY",
+            "STATE",
+            "ZIP",
+            "LAT",
+            "LON",
+            "UTILIZATION"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "의료진 — 전체 관리 (CRUD)"
+        },
+        "organizations": {
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE",
+            "DELETE"
+          ],
+          "allowed_columns": [
+            "Id",
+            "NAME",
+            "ADDRESS",
+            "CITY",
+            "STATE",
+            "ZIP",
+            "LAT",
+            "LON",
+            "PHONE",
+            "REVENUE",
+            "UTILIZATION"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "의료기관 — 전체 관리 (CRUD)"
+        },
+        "payers": {
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE",
+            "DELETE"
+          ],
+          "allowed_columns": [
+            "Id",
+            "NAME",
+            "ADDRESS",
+            "CITY",
+            "STATE_HEADQUARTERED",
+            "ZIP",
+            "PHONE",
+            "AMOUNT_COVERED",
+            "AMOUNT_UNCOVERED",
+            "REVENUE",
+            "COVERED_ENCOUNTERS",
+            "UNCOVERED_ENCOUNTERS",
+            "COVERED_MEDICATIONS",
+            "UNCOVERED_MEDICATIONS",
+            "COVERED_PROCEDURES",
+            "UNCOVERED_PROCEDURES",
+            "COVERED_IMMUNIZATIONS",
+            "UNCOVERED_IMMUNIZATIONS",
+            "UNIQUE_CUSTOMERS",
+            "QOLS_AVG",
+            "MEMBER_MONTHS"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "보험사 — 전체 관리 (CRUD)"
+        }
+      }
+    },
+    "privacy_officer": {
+      "role_name": "privacy_officer",
+      "display_name": "개인정보보호책임자 / 준법감시인 (Privacy & Compliance Officer)",
+      "description": "HIPAA·개인정보 규제 준수와 PHI/PII 접근 감사를 위해 모든 테이블에 대한 읽기 권한 보유. 데이터 수정 권한은 없으며 감사·모니터링 목적으로만 접근.",
+      "level": 2,
+      "table_permissions": {
+        "patients": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "Id",
+            "BIRTHDATE",
+            "DEATHDATE",
+            "SSN",
+            "DRIVERS",
+            "PASSPORT",
+            "PREFIX",
+            "FIRST",
+            "LAST",
+            "SUFFIX",
+            "MAIDEN",
+            "MARITAL",
+            "RACE",
+            "ETHNICITY",
+            "GENDER",
+            "BIRTHPLACE",
+            "ADDRESS",
+            "CITY",
+            "STATE",
+            "COUNTY",
+            "ZIP",
+            "LAT",
+            "LON",
+            "HEALTHCARE_EXPENSES",
+            "HEALTHCARE_COVERAGE"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "환자(개인식별정보 PII) — 전체 조회 전용 (감사·규제 감시)"
+        },
+        "conditions": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "START",
+            "STOP",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "진단 — 전체 조회 전용 (감사·규제 감시)"
+        },
+        "medications": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "START",
+            "STOP",
+            "PATIENT",
+            "PAYER",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "BASE_COST",
+            "PAYER_COVERAGE",
+            "DISPENSES",
+            "TOTALCOST",
+            "REASONCODE",
+            "REASONDESCRIPTION"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "투약/처방 — 전체 조회 전용 (감사·규제 감시)"
+        },
+        "procedures": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "START",
+            "STOP",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "BASE_COST",
+            "REASONCODE",
+            "REASONDESCRIPTION"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "시술 — 전체 조회 전용 (감사·규제 감시)"
+        },
+        "observations": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "DATE",
+            "PATIENT",
+            "ENCOUNTER",
+            "CATEGORY",
+            "CODE",
+            "DESCRIPTION",
+            "VALUE",
+            "UNITS",
+            "TYPE"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "관찰/검사결과 — 전체 조회 전용 (감사·규제 감시)"
+        },
+        "allergies": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "START",
+            "STOP",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "SYSTEM",
+            "DESCRIPTION",
+            "TYPE",
+            "CATEGORY",
+            "REACTION1",
+            "DESCRIPTION1",
+            "SEVERITY1",
+            "REACTION2",
+            "DESCRIPTION2",
+            "SEVERITY2"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "알레르기 — 전체 조회 전용 (감사·규제 감시)"
+        },
+        "immunizations": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "DATE",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "BASE_COST"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "예방접종 — 전체 조회 전용 (감사·규제 감시)"
+        },
+        "careplans": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "Id",
+            "START",
+            "STOP",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "REASONCODE",
+            "REASONDESCRIPTION"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "케어플랜 — 전체 조회 전용 (감사·규제 감시)"
+        },
+        "devices": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "START",
+            "STOP",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "UDI"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "의료기기 — 전체 조회 전용 (감사·규제 감시)"
+        },
+        "supplies": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "DATE",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "QUANTITY"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "의료용품 — 전체 조회 전용 (감사·규제 감시)"
+        },
+        "imaging_studies": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "Id",
+            "DATE",
+            "PATIENT",
+            "ENCOUNTER",
+            "SERIES_UID",
+            "BODYSITE_CODE",
+            "BODYSITE_DESCRIPTION",
+            "MODALITY_CODE",
+            "MODALITY_DESCRIPTION",
+            "INSTANCE_UID",
+            "SOP_CODE",
+            "SOP_DESCRIPTION",
+            "PROCEDURE_CODE"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "영상검사 — 전체 조회 전용 (감사·규제 감시)"
+        },
+        "encounters": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "Id",
+            "START",
+            "STOP",
+            "PATIENT",
+            "ORGANIZATION",
+            "PROVIDER",
+            "PAYER",
+            "ENCOUNTERCLASS",
+            "CODE",
+            "DESCRIPTION",
+            "BASE_ENCOUNTER_COST",
+            "TOTAL_CLAIM_COST",
+            "PAYER_COVERAGE",
+            "REASONCODE",
+            "REASONDESCRIPTION"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "내원 기록 — 전체 조회 전용 (감사·규제 감시)"
+        },
+        "claims": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "Id",
+            "PATIENTID",
+            "PROVIDERID",
+            "PRIMARYPATIENTINSURANCEID",
+            "SECONDARYPATIENTINSURANCEID",
+            "DEPARTMENTID",
+            "PATIENTDEPARTMENTID",
+            "DIAGNOSIS1",
+            "DIAGNOSIS2",
+            "DIAGNOSIS3",
+            "DIAGNOSIS4",
+            "DIAGNOSIS5",
+            "DIAGNOSIS6",
+            "DIAGNOSIS7",
+            "DIAGNOSIS8",
+            "REFERRINGPROVIDERID",
+            "APPOINTMENTID",
+            "CURRENTILLNESSDATE",
+            "SERVICEDATE",
+            "SUPERVISINGPROVIDERID",
+            "STATUS1",
+            "STATUS2",
+            "STATUSP",
+            "OUTSTANDING1",
+            "OUTSTANDING2",
+            "OUTSTANDINGP",
+            "LASTBILLEDDATE1",
+            "LASTBILLEDDATE2",
+            "LASTBILLEDDATEP",
+            "HEALTHCARECLAIMTYPEID1",
+            "HEALTHCARECLAIMTYPEID2"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "보험청구 — 전체 조회 전용 (감사·규제 감시)"
+        },
+        "claims_transactions": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "ID",
+            "CLAIMID",
+            "CHARGEID",
+            "PATIENTID",
+            "TYPE",
+            "AMOUNT",
+            "METHOD",
+            "FROMDATE",
+            "TODATE",
+            "PLACEOFSERVICE",
+            "PROCEDURECODE",
+            "MODIFIER1",
+            "MODIFIER2",
+            "DIAGNOSISREF1",
+            "DIAGNOSISREF2",
+            "DIAGNOSISREF3",
+            "DIAGNOSISREF4",
+            "UNITS",
+            "DEPARTMENTID",
+            "NOTES",
+            "UNITAMOUNT",
+            "TRANSFEROUTID",
+            "TRANSFERTYPE",
+            "PAYMENTS",
+            "ADJUSTMENTS",
+            "TRANSFERS",
+            "OUTSTANDING",
+            "APPOINTMENTID",
+            "LINENOTE",
+            "PATIENTINSURANCEID",
+            "FEESCHEDULEID",
+            "PROVIDERID",
+            "SUPERVISINGPROVIDERID"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "청구 거래내역 — 전체 조회 전용 (감사·규제 감시)"
+        },
+        "payer_transitions": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "PATIENT",
+            "MEMBERID",
+            "START_YEAR",
+            "END_YEAR",
+            "PAYER",
+            "SECONDARY_PAYER",
+            "OWNERSHIP",
+            "OWNERNAME"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "보험 가입이력 — 전체 조회 전용 (감사·규제 감시)"
+        },
+        "providers": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "Id",
+            "ORGANIZATION",
+            "NAME",
+            "GENDER",
+            "SPECIALITY",
+            "ADDRESS",
+            "CITY",
+            "STATE",
+            "ZIP",
+            "LAT",
+            "LON",
+            "UTILIZATION"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "의료진 — 전체 조회 전용 (감사·규제 감시)"
+        },
+        "organizations": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "Id",
+            "NAME",
+            "ADDRESS",
+            "CITY",
+            "STATE",
+            "ZIP",
+            "LAT",
+            "LON",
+            "PHONE",
+            "REVENUE",
+            "UTILIZATION"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "의료기관 — 전체 조회 전용 (감사·규제 감시)"
+        },
+        "payers": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "Id",
+            "NAME",
+            "ADDRESS",
+            "CITY",
+            "STATE_HEADQUARTERED",
+            "ZIP",
+            "PHONE",
+            "AMOUNT_COVERED",
+            "AMOUNT_UNCOVERED",
+            "REVENUE",
+            "COVERED_ENCOUNTERS",
+            "UNCOVERED_ENCOUNTERS",
+            "COVERED_MEDICATIONS",
+            "UNCOVERED_MEDICATIONS",
+            "COVERED_PROCEDURES",
+            "UNCOVERED_PROCEDURES",
+            "COVERED_IMMUNIZATIONS",
+            "UNCOVERED_IMMUNIZATIONS",
+            "UNIQUE_CUSTOMERS",
+            "QOLS_AVG",
+            "MEMBER_MONTHS"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "보험사 — 전체 조회 전용 (감사·규제 감시)"
+        }
+      }
+    },
+    "hospital_director": {
+      "role_name": "hospital_director",
+      "display_name": "병원장 / 의료원장 (Hospital Director)",
+      "description": "병원 운영 총괄. 대부분 테이블에 대한 조회·입력·수정 권한 보유. 재무 거래(claims_transactions)는 조회만 가능하며, 환자 법정 식별번호(SSN 등)와 삭제 권한은 없음.",
+      "level": 3,
+      "table_permissions": {
+        "patients": {
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE"
+          ],
+          "allowed_columns": [
+            "Id",
+            "BIRTHDATE",
+            "DEATHDATE",
+            "PREFIX",
+            "FIRST",
+            "LAST",
+            "SUFFIX",
+            "MAIDEN",
+            "MARITAL",
+            "RACE",
+            "ETHNICITY",
+            "GENDER",
+            "BIRTHPLACE",
+            "ADDRESS",
+            "CITY",
+            "STATE",
+            "COUNTY",
+            "ZIP",
+            "LAT",
+            "LON",
+            "HEALTHCARE_EXPENSES",
+            "HEALTHCARE_COVERAGE"
+          ],
+          "denied_columns": [
+            "SSN",
+            "DRIVERS",
+            "PASSPORT"
+          ],
+          "row_filter": null,
+          "description": "환자(개인식별정보 PII) — 운영 총괄 (재무거래는 조회만, SSN·삭제 제외)"
+        },
+        "conditions": {
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE"
+          ],
+          "allowed_columns": [
+            "START",
+            "STOP",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "진단 — 운영 총괄 (재무거래는 조회만, SSN·삭제 제외)"
+        },
+        "medications": {
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE"
+          ],
+          "allowed_columns": [
+            "START",
+            "STOP",
+            "PATIENT",
+            "PAYER",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "BASE_COST",
+            "PAYER_COVERAGE",
+            "DISPENSES",
+            "TOTALCOST",
+            "REASONCODE",
+            "REASONDESCRIPTION"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "투약/처방 — 운영 총괄 (재무거래는 조회만, SSN·삭제 제외)"
+        },
+        "procedures": {
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE"
+          ],
+          "allowed_columns": [
+            "START",
+            "STOP",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "BASE_COST",
+            "REASONCODE",
+            "REASONDESCRIPTION"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "시술 — 운영 총괄 (재무거래는 조회만, SSN·삭제 제외)"
+        },
+        "observations": {
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE"
+          ],
+          "allowed_columns": [
+            "DATE",
+            "PATIENT",
+            "ENCOUNTER",
+            "CATEGORY",
+            "CODE",
+            "DESCRIPTION",
+            "VALUE",
+            "UNITS",
+            "TYPE"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "관찰/검사결과 — 운영 총괄 (재무거래는 조회만, SSN·삭제 제외)"
+        },
+        "allergies": {
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE"
+          ],
+          "allowed_columns": [
+            "START",
+            "STOP",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "SYSTEM",
+            "DESCRIPTION",
+            "TYPE",
+            "CATEGORY",
+            "REACTION1",
+            "DESCRIPTION1",
+            "SEVERITY1",
+            "REACTION2",
+            "DESCRIPTION2",
+            "SEVERITY2"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "알레르기 — 운영 총괄 (재무거래는 조회만, SSN·삭제 제외)"
+        },
+        "immunizations": {
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE"
+          ],
+          "allowed_columns": [
+            "DATE",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "BASE_COST"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "예방접종 — 운영 총괄 (재무거래는 조회만, SSN·삭제 제외)"
+        },
+        "careplans": {
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE"
+          ],
+          "allowed_columns": [
+            "Id",
+            "START",
+            "STOP",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "REASONCODE",
+            "REASONDESCRIPTION"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "케어플랜 — 운영 총괄 (재무거래는 조회만, SSN·삭제 제외)"
+        },
+        "devices": {
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE"
+          ],
+          "allowed_columns": [
+            "START",
+            "STOP",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "UDI"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "의료기기 — 운영 총괄 (재무거래는 조회만, SSN·삭제 제외)"
+        },
+        "supplies": {
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE"
+          ],
+          "allowed_columns": [
+            "DATE",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "QUANTITY"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "의료용품 — 운영 총괄 (재무거래는 조회만, SSN·삭제 제외)"
+        },
+        "imaging_studies": {
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE"
+          ],
+          "allowed_columns": [
+            "Id",
+            "DATE",
+            "PATIENT",
+            "ENCOUNTER",
+            "SERIES_UID",
+            "BODYSITE_CODE",
+            "BODYSITE_DESCRIPTION",
+            "MODALITY_CODE",
+            "MODALITY_DESCRIPTION",
+            "INSTANCE_UID",
+            "SOP_CODE",
+            "SOP_DESCRIPTION",
+            "PROCEDURE_CODE"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "영상검사 — 운영 총괄 (재무거래는 조회만, SSN·삭제 제외)"
+        },
+        "encounters": {
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE"
+          ],
+          "allowed_columns": [
+            "Id",
+            "START",
+            "STOP",
+            "PATIENT",
+            "ORGANIZATION",
+            "PROVIDER",
+            "PAYER",
+            "ENCOUNTERCLASS",
+            "CODE",
+            "DESCRIPTION",
+            "BASE_ENCOUNTER_COST",
+            "TOTAL_CLAIM_COST",
+            "PAYER_COVERAGE",
+            "REASONCODE",
+            "REASONDESCRIPTION"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "내원 기록 — 운영 총괄 (재무거래는 조회만, SSN·삭제 제외)"
+        },
+        "claims": {
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE"
+          ],
+          "allowed_columns": [
+            "Id",
+            "PATIENTID",
+            "PROVIDERID",
+            "PRIMARYPATIENTINSURANCEID",
+            "SECONDARYPATIENTINSURANCEID",
+            "DEPARTMENTID",
+            "PATIENTDEPARTMENTID",
+            "DIAGNOSIS1",
+            "DIAGNOSIS2",
+            "DIAGNOSIS3",
+            "DIAGNOSIS4",
+            "DIAGNOSIS5",
+            "DIAGNOSIS6",
+            "DIAGNOSIS7",
+            "DIAGNOSIS8",
+            "REFERRINGPROVIDERID",
+            "APPOINTMENTID",
+            "CURRENTILLNESSDATE",
+            "SERVICEDATE",
+            "SUPERVISINGPROVIDERID",
+            "STATUS1",
+            "STATUS2",
+            "STATUSP",
+            "OUTSTANDING1",
+            "OUTSTANDING2",
+            "OUTSTANDINGP",
+            "LASTBILLEDDATE1",
+            "LASTBILLEDDATE2",
+            "LASTBILLEDDATEP",
+            "HEALTHCARECLAIMTYPEID1",
+            "HEALTHCARECLAIMTYPEID2"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "보험청구 — 운영 총괄 (재무거래는 조회만, SSN·삭제 제외)"
+        },
+        "claims_transactions": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "ID",
+            "CLAIMID",
+            "CHARGEID",
+            "PATIENTID",
+            "TYPE",
+            "AMOUNT",
+            "METHOD",
+            "FROMDATE",
+            "TODATE",
+            "PLACEOFSERVICE",
+            "PROCEDURECODE",
+            "MODIFIER1",
+            "MODIFIER2",
+            "DIAGNOSISREF1",
+            "DIAGNOSISREF2",
+            "DIAGNOSISREF3",
+            "DIAGNOSISREF4",
+            "UNITS",
+            "DEPARTMENTID",
+            "NOTES",
+            "UNITAMOUNT",
+            "TRANSFEROUTID",
+            "TRANSFERTYPE",
+            "PAYMENTS",
+            "ADJUSTMENTS",
+            "TRANSFERS",
+            "OUTSTANDING",
+            "APPOINTMENTID",
+            "LINENOTE",
+            "PATIENTINSURANCEID",
+            "FEESCHEDULEID",
+            "PROVIDERID",
+            "SUPERVISINGPROVIDERID"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "청구 거래내역 — 운영 총괄 (재무거래는 조회만, SSN·삭제 제외)"
+        },
+        "payer_transitions": {
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE"
+          ],
+          "allowed_columns": [
+            "PATIENT",
+            "MEMBERID",
+            "START_YEAR",
+            "END_YEAR",
+            "PAYER",
+            "SECONDARY_PAYER",
+            "OWNERSHIP",
+            "OWNERNAME"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "보험 가입이력 — 운영 총괄 (재무거래는 조회만, SSN·삭제 제외)"
+        },
+        "providers": {
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE"
+          ],
+          "allowed_columns": [
+            "Id",
+            "ORGANIZATION",
+            "NAME",
+            "GENDER",
+            "SPECIALITY",
+            "ADDRESS",
+            "CITY",
+            "STATE",
+            "ZIP",
+            "LAT",
+            "LON",
+            "UTILIZATION"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "의료진 — 운영 총괄 (재무거래는 조회만, SSN·삭제 제외)"
+        },
+        "organizations": {
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE"
+          ],
+          "allowed_columns": [
+            "Id",
+            "NAME",
+            "ADDRESS",
+            "CITY",
+            "STATE",
+            "ZIP",
+            "LAT",
+            "LON",
+            "PHONE",
+            "REVENUE",
+            "UTILIZATION"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "의료기관 — 운영 총괄 (재무거래는 조회만, SSN·삭제 제외)"
+        },
+        "payers": {
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE"
+          ],
+          "allowed_columns": [
+            "Id",
+            "NAME",
+            "ADDRESS",
+            "CITY",
+            "STATE_HEADQUARTERED",
+            "ZIP",
+            "PHONE",
+            "AMOUNT_COVERED",
+            "AMOUNT_UNCOVERED",
+            "REVENUE",
+            "COVERED_ENCOUNTERS",
+            "UNCOVERED_ENCOUNTERS",
+            "COVERED_MEDICATIONS",
+            "UNCOVERED_MEDICATIONS",
+            "COVERED_PROCEDURES",
+            "UNCOVERED_PROCEDURES",
+            "COVERED_IMMUNIZATIONS",
+            "UNCOVERED_IMMUNIZATIONS",
+            "UNIQUE_CUSTOMERS",
+            "QOLS_AVG",
+            "MEMBER_MONTHS"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "보험사 — 운영 총괄 (재무거래는 조회만, SSN·삭제 제외)"
+        }
+      }
+    },
+    "attending_physician": {
+      "role_name": "attending_physician",
+      "display_name": "주치의 / 임상의사 (Attending Physician)",
+      "description": "진료·처방의 주체. 본인이 담당하는 환자(행 수준 필터)의 임상 기록과 내원 기록을 전체 CRUD. 환자 인적사항은 진료에 필요한 컬럼만 조회하며 법정 식별번호·재무 정보는 제외. 청구는 본인 환자 건만 제한적으로 조회.",
+      "level": 4,
+      "table_permissions": {
+        "patients": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "Id",
+            "BIRTHDATE",
+            "DEATHDATE",
+            "PREFIX",
+            "FIRST",
+            "LAST",
+            "SUFFIX",
+            "MAIDEN",
+            "MARITAL",
+            "RACE",
+            "ETHNICITY",
+            "GENDER",
+            "BIRTHPLACE",
+            "ADDRESS",
+            "CITY",
+            "STATE",
+            "COUNTY",
+            "ZIP"
+          ],
+          "denied_columns": [
+            "SSN",
+            "DRIVERS",
+            "PASSPORT",
+            "LAT",
+            "LON",
+            "HEALTHCARE_EXPENSES",
+            "HEALTHCARE_COVERAGE"
+          ],
+          "row_filter": "Id IN (SELECT PATIENT FROM encounters WHERE PROVIDER = '{current_user_provider_id}')",
+          "description": "환자(개인식별정보 PII) — 담당환자 임상 전체 CRUD (행수준 필터, 청구는 제한 조회)"
+        },
+        "conditions": {
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE",
+            "DELETE"
+          ],
+          "allowed_columns": [
+            "START",
+            "STOP",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION"
+          ],
+          "denied_columns": [],
+          "row_filter": "PATIENT IN (SELECT PATIENT FROM encounters WHERE PROVIDER = '{current_user_provider_id}')",
+          "description": "진단 — 담당환자 임상 전체 CRUD (행수준 필터, 청구는 제한 조회)"
+        },
+        "medications": {
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE",
+            "DELETE"
+          ],
+          "allowed_columns": [
+            "START",
+            "STOP",
+            "PATIENT",
+            "PAYER",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "BASE_COST",
+            "PAYER_COVERAGE",
+            "DISPENSES",
+            "TOTALCOST",
+            "REASONCODE",
+            "REASONDESCRIPTION"
+          ],
+          "denied_columns": [],
+          "row_filter": "PATIENT IN (SELECT PATIENT FROM encounters WHERE PROVIDER = '{current_user_provider_id}')",
+          "description": "투약/처방 — 담당환자 임상 전체 CRUD (행수준 필터, 청구는 제한 조회)"
+        },
+        "procedures": {
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE",
+            "DELETE"
+          ],
+          "allowed_columns": [
+            "START",
+            "STOP",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "BASE_COST",
+            "REASONCODE",
+            "REASONDESCRIPTION"
+          ],
+          "denied_columns": [],
+          "row_filter": "PATIENT IN (SELECT PATIENT FROM encounters WHERE PROVIDER = '{current_user_provider_id}')",
+          "description": "시술 — 담당환자 임상 전체 CRUD (행수준 필터, 청구는 제한 조회)"
+        },
+        "observations": {
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE",
+            "DELETE"
+          ],
+          "allowed_columns": [
+            "DATE",
+            "PATIENT",
+            "ENCOUNTER",
+            "CATEGORY",
+            "CODE",
+            "DESCRIPTION",
+            "VALUE",
+            "UNITS",
+            "TYPE"
+          ],
+          "denied_columns": [],
+          "row_filter": "PATIENT IN (SELECT PATIENT FROM encounters WHERE PROVIDER = '{current_user_provider_id}')",
+          "description": "관찰/검사결과 — 담당환자 임상 전체 CRUD (행수준 필터, 청구는 제한 조회)"
+        },
+        "allergies": {
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE",
+            "DELETE"
+          ],
+          "allowed_columns": [
+            "START",
+            "STOP",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "SYSTEM",
+            "DESCRIPTION",
+            "TYPE",
+            "CATEGORY",
+            "REACTION1",
+            "DESCRIPTION1",
+            "SEVERITY1",
+            "REACTION2",
+            "DESCRIPTION2",
+            "SEVERITY2"
+          ],
+          "denied_columns": [],
+          "row_filter": "PATIENT IN (SELECT PATIENT FROM encounters WHERE PROVIDER = '{current_user_provider_id}')",
+          "description": "알레르기 — 담당환자 임상 전체 CRUD (행수준 필터, 청구는 제한 조회)"
+        },
+        "immunizations": {
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE",
+            "DELETE"
+          ],
+          "allowed_columns": [
+            "DATE",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "BASE_COST"
+          ],
+          "denied_columns": [],
+          "row_filter": "PATIENT IN (SELECT PATIENT FROM encounters WHERE PROVIDER = '{current_user_provider_id}')",
+          "description": "예방접종 — 담당환자 임상 전체 CRUD (행수준 필터, 청구는 제한 조회)"
+        },
+        "careplans": {
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE",
+            "DELETE"
+          ],
+          "allowed_columns": [
+            "Id",
+            "START",
+            "STOP",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "REASONCODE",
+            "REASONDESCRIPTION"
+          ],
+          "denied_columns": [],
+          "row_filter": "PATIENT IN (SELECT PATIENT FROM encounters WHERE PROVIDER = '{current_user_provider_id}')",
+          "description": "케어플랜 — 담당환자 임상 전체 CRUD (행수준 필터, 청구는 제한 조회)"
+        },
+        "devices": {
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE",
+            "DELETE"
+          ],
+          "allowed_columns": [
+            "START",
+            "STOP",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "UDI"
+          ],
+          "denied_columns": [],
+          "row_filter": "PATIENT IN (SELECT PATIENT FROM encounters WHERE PROVIDER = '{current_user_provider_id}')",
+          "description": "의료기기 — 담당환자 임상 전체 CRUD (행수준 필터, 청구는 제한 조회)"
+        },
+        "supplies": {
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE",
+            "DELETE"
+          ],
+          "allowed_columns": [
+            "DATE",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "QUANTITY"
+          ],
+          "denied_columns": [],
+          "row_filter": "PATIENT IN (SELECT PATIENT FROM encounters WHERE PROVIDER = '{current_user_provider_id}')",
+          "description": "의료용품 — 담당환자 임상 전체 CRUD (행수준 필터, 청구는 제한 조회)"
+        },
+        "imaging_studies": {
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE",
+            "DELETE"
+          ],
+          "allowed_columns": [
+            "Id",
+            "DATE",
+            "PATIENT",
+            "ENCOUNTER",
+            "SERIES_UID",
+            "BODYSITE_CODE",
+            "BODYSITE_DESCRIPTION",
+            "MODALITY_CODE",
+            "MODALITY_DESCRIPTION",
+            "INSTANCE_UID",
+            "SOP_CODE",
+            "SOP_DESCRIPTION",
+            "PROCEDURE_CODE"
+          ],
+          "denied_columns": [],
+          "row_filter": "PATIENT IN (SELECT PATIENT FROM encounters WHERE PROVIDER = '{current_user_provider_id}')",
+          "description": "영상검사 — 담당환자 임상 전체 CRUD (행수준 필터, 청구는 제한 조회)"
+        },
+        "encounters": {
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE",
+            "DELETE"
+          ],
+          "allowed_columns": [
+            "Id",
+            "START",
+            "STOP",
+            "PATIENT",
+            "ORGANIZATION",
+            "PROVIDER",
+            "PAYER",
+            "ENCOUNTERCLASS",
+            "CODE",
+            "DESCRIPTION",
+            "BASE_ENCOUNTER_COST",
+            "TOTAL_CLAIM_COST",
+            "PAYER_COVERAGE",
+            "REASONCODE",
+            "REASONDESCRIPTION"
+          ],
+          "denied_columns": [],
+          "row_filter": "PROVIDER = '{current_user_provider_id}' OR PATIENT IN (SELECT PATIENT FROM encounters WHERE PROVIDER = '{current_user_provider_id}')",
+          "description": "내원 기록 — 담당환자 임상 전체 CRUD (행수준 필터, 청구는 제한 조회)"
+        },
+        "claims": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "Id",
+            "PATIENTID",
+            "PROVIDERID",
+            "PRIMARYPATIENTINSURANCEID",
+            "SECONDARYPATIENTINSURANCEID",
+            "DEPARTMENTID",
+            "PATIENTDEPARTMENTID",
+            "DIAGNOSIS1",
+            "DIAGNOSIS2",
+            "DIAGNOSIS3",
+            "DIAGNOSIS4",
+            "DIAGNOSIS5",
+            "DIAGNOSIS6",
+            "DIAGNOSIS7",
+            "DIAGNOSIS8",
+            "REFERRINGPROVIDERID",
+            "APPOINTMENTID",
+            "CURRENTILLNESSDATE",
+            "SERVICEDATE",
+            "SUPERVISINGPROVIDERID",
+            "STATUS1",
+            "STATUS2",
+            "STATUSP",
+            "LASTBILLEDDATE1",
+            "LASTBILLEDDATE2",
+            "LASTBILLEDDATEP",
+            "HEALTHCARECLAIMTYPEID1",
+            "HEALTHCARECLAIMTYPEID2"
+          ],
+          "denied_columns": [
+            "OUTSTANDING1",
+            "OUTSTANDING2",
+            "OUTSTANDINGP"
+          ],
+          "row_filter": "PATIENTID IN (SELECT PATIENT FROM encounters WHERE PROVIDER = '{current_user_provider_id}')",
+          "description": "보험청구 — 담당환자 임상 전체 CRUD (행수준 필터, 청구는 제한 조회)"
+        },
+        "claims_transactions": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "ID",
+            "CLAIMID",
+            "PATIENTID",
+            "TYPE",
+            "FROMDATE",
+            "TODATE",
+            "PROCEDURECODE",
+            "DIAGNOSISREF1"
+          ],
+          "denied_columns": [
+            "CHARGEID",
+            "AMOUNT",
+            "METHOD",
+            "PLACEOFSERVICE",
+            "MODIFIER1",
+            "MODIFIER2",
+            "DIAGNOSISREF2",
+            "DIAGNOSISREF3",
+            "DIAGNOSISREF4",
+            "UNITS",
+            "DEPARTMENTID",
+            "NOTES",
+            "UNITAMOUNT",
+            "TRANSFEROUTID",
+            "TRANSFERTYPE",
+            "PAYMENTS",
+            "ADJUSTMENTS",
+            "TRANSFERS",
+            "OUTSTANDING",
+            "APPOINTMENTID",
+            "LINENOTE",
+            "PATIENTINSURANCEID",
+            "FEESCHEDULEID",
+            "PROVIDERID",
+            "SUPERVISINGPROVIDERID"
+          ],
+          "row_filter": "PATIENTID IN (SELECT PATIENT FROM encounters WHERE PROVIDER = '{current_user_provider_id}')",
+          "description": "청구 거래내역 — 담당환자 임상 전체 CRUD (행수준 필터, 청구는 제한 조회)"
+        },
+        "payer_transitions": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "PATIENT",
+            "START_YEAR",
+            "END_YEAR",
+            "PAYER"
+          ],
+          "denied_columns": [
+            "MEMBERID",
+            "SECONDARY_PAYER",
+            "OWNERSHIP",
+            "OWNERNAME"
+          ],
+          "row_filter": "PATIENT IN (SELECT PATIENT FROM encounters WHERE PROVIDER = '{current_user_provider_id}')",
+          "description": "보험 가입이력 — 담당환자 임상 전체 CRUD (행수준 필터, 청구는 제한 조회)"
+        },
+        "providers": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "Id",
+            "ORGANIZATION",
+            "NAME",
+            "GENDER",
+            "SPECIALITY",
+            "ADDRESS",
+            "CITY",
+            "STATE",
+            "ZIP",
+            "LAT",
+            "LON",
+            "UTILIZATION"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "의료진 — 담당환자 임상 전체 CRUD (행수준 필터, 청구는 제한 조회)"
+        },
+        "organizations": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "Id",
+            "NAME",
+            "ADDRESS",
+            "CITY",
+            "STATE",
+            "ZIP",
+            "LAT",
+            "LON",
+            "PHONE",
+            "REVENUE",
+            "UTILIZATION"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "의료기관 — 담당환자 임상 전체 CRUD (행수준 필터, 청구는 제한 조회)"
+        },
+        "payers": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "Id",
+            "NAME",
+            "ADDRESS",
+            "CITY",
+            "STATE_HEADQUARTERED",
+            "ZIP",
+            "PHONE",
+            "AMOUNT_COVERED",
+            "AMOUNT_UNCOVERED",
+            "REVENUE",
+            "COVERED_ENCOUNTERS",
+            "UNCOVERED_ENCOUNTERS",
+            "COVERED_MEDICATIONS",
+            "UNCOVERED_MEDICATIONS",
+            "COVERED_PROCEDURES",
+            "UNCOVERED_PROCEDURES",
+            "COVERED_IMMUNIZATIONS",
+            "UNCOVERED_IMMUNIZATIONS",
+            "UNIQUE_CUSTOMERS",
+            "QOLS_AVG",
+            "MEMBER_MONTHS"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "보험사 — 담당환자 임상 전체 CRUD (행수준 필터, 청구는 제한 조회)"
+        }
+      }
+    },
+    "nurse": {
+      "role_name": "nurse",
+      "display_name": "간호사 (Registered Nurse)",
+      "description": "활력징후·투약·예방접종 등 임상 실무 담당. 관찰·접종·물품·의료기기는 입력·수정 가능, 투약 기록은 수정 가능. 진단·처방·시술은 조회만. 청구·재무 데이터는 접근 불가.",
+      "level": 5,
+      "table_permissions": {
+        "patients": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "Id",
+            "BIRTHDATE",
+            "FIRST",
+            "LAST",
+            "MARITAL",
+            "GENDER"
+          ],
+          "denied_columns": [
+            "DEATHDATE",
+            "SSN",
+            "DRIVERS",
+            "PASSPORT",
+            "PREFIX",
+            "SUFFIX",
+            "MAIDEN",
+            "RACE",
+            "ETHNICITY",
+            "BIRTHPLACE",
+            "ADDRESS",
+            "CITY",
+            "STATE",
+            "COUNTY",
+            "ZIP",
+            "LAT",
+            "LON",
+            "HEALTHCARE_EXPENSES",
+            "HEALTHCARE_COVERAGE"
+          ],
+          "row_filter": null,
+          "description": "환자(개인식별정보 PII) — 활력·투약·접종 입력/수정, 청구 접근 불가"
+        },
+        "conditions": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "START",
+            "STOP",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "진단 — 활력·투약·접종 입력/수정, 청구 접근 불가"
+        },
+        "medications": {
+          "allowed_operations": [
+            "SELECT",
+            "UPDATE"
+          ],
+          "allowed_columns": [
+            "START",
+            "STOP",
+            "PATIENT",
+            "PAYER",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "DISPENSES",
+            "REASONCODE",
+            "REASONDESCRIPTION"
+          ],
+          "denied_columns": [
+            "BASE_COST",
+            "PAYER_COVERAGE",
+            "TOTALCOST"
+          ],
+          "row_filter": null,
+          "description": "투약/처방 — 활력·투약·접종 입력/수정, 청구 접근 불가"
+        },
+        "procedures": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "START",
+            "STOP",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "REASONCODE",
+            "REASONDESCRIPTION"
+          ],
+          "denied_columns": [
+            "BASE_COST"
+          ],
+          "row_filter": null,
+          "description": "시술 — 활력·투약·접종 입력/수정, 청구 접근 불가"
+        },
+        "observations": {
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE"
+          ],
+          "allowed_columns": [
+            "DATE",
+            "PATIENT",
+            "ENCOUNTER",
+            "CATEGORY",
+            "CODE",
+            "DESCRIPTION",
+            "VALUE",
+            "UNITS",
+            "TYPE"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "관찰/검사결과 — 활력·투약·접종 입력/수정, 청구 접근 불가"
+        },
+        "allergies": {
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE"
+          ],
+          "allowed_columns": [
+            "START",
+            "STOP",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "SYSTEM",
+            "DESCRIPTION",
+            "TYPE",
+            "CATEGORY",
+            "REACTION1",
+            "DESCRIPTION1",
+            "SEVERITY1",
+            "REACTION2",
+            "DESCRIPTION2",
+            "SEVERITY2"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "알레르기 — 활력·투약·접종 입력/수정, 청구 접근 불가"
+        },
+        "immunizations": {
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE"
+          ],
+          "allowed_columns": [
+            "DATE",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "BASE_COST"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "예방접종 — 활력·투약·접종 입력/수정, 청구 접근 불가"
+        },
+        "careplans": {
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE"
+          ],
+          "allowed_columns": [
+            "Id",
+            "START",
+            "STOP",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "REASONCODE",
+            "REASONDESCRIPTION"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "케어플랜 — 활력·투약·접종 입력/수정, 청구 접근 불가"
+        },
+        "devices": {
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE"
+          ],
+          "allowed_columns": [
+            "START",
+            "STOP",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "UDI"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "의료기기 — 활력·투약·접종 입력/수정, 청구 접근 불가"
+        },
+        "supplies": {
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE"
+          ],
+          "allowed_columns": [
+            "DATE",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "QUANTITY"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "의료용품 — 활력·투약·접종 입력/수정, 청구 접근 불가"
+        },
+        "imaging_studies": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "Id",
+            "DATE",
+            "PATIENT",
+            "ENCOUNTER",
+            "SERIES_UID",
+            "BODYSITE_CODE",
+            "BODYSITE_DESCRIPTION",
+            "MODALITY_CODE",
+            "MODALITY_DESCRIPTION",
+            "INSTANCE_UID",
+            "SOP_CODE",
+            "SOP_DESCRIPTION",
+            "PROCEDURE_CODE"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "영상검사 — 활력·투약·접종 입력/수정, 청구 접근 불가"
+        },
+        "encounters": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "Id",
+            "START",
+            "STOP",
+            "PATIENT",
+            "ORGANIZATION",
+            "PROVIDER",
+            "PAYER",
+            "ENCOUNTERCLASS",
+            "CODE",
+            "DESCRIPTION",
+            "REASONCODE",
+            "REASONDESCRIPTION"
+          ],
+          "denied_columns": [
+            "BASE_ENCOUNTER_COST",
+            "TOTAL_CLAIM_COST",
+            "PAYER_COVERAGE"
+          ],
+          "row_filter": null,
+          "description": "내원 기록 — 활력·투약·접종 입력/수정, 청구 접근 불가"
+        },
+        "claims": {
+          "allowed_operations": [],
+          "allowed_columns": [],
+          "denied_columns": [
+            "Id",
+            "PATIENTID",
+            "PROVIDERID",
+            "PRIMARYPATIENTINSURANCEID",
+            "SECONDARYPATIENTINSURANCEID",
+            "DEPARTMENTID",
+            "PATIENTDEPARTMENTID",
+            "DIAGNOSIS1",
+            "DIAGNOSIS2",
+            "DIAGNOSIS3",
+            "DIAGNOSIS4",
+            "DIAGNOSIS5",
+            "DIAGNOSIS6",
+            "DIAGNOSIS7",
+            "DIAGNOSIS8",
+            "REFERRINGPROVIDERID",
+            "APPOINTMENTID",
+            "CURRENTILLNESSDATE",
+            "SERVICEDATE",
+            "SUPERVISINGPROVIDERID",
+            "STATUS1",
+            "STATUS2",
+            "STATUSP",
+            "OUTSTANDING1",
+            "OUTSTANDING2",
+            "OUTSTANDINGP",
+            "LASTBILLEDDATE1",
+            "LASTBILLEDDATE2",
+            "LASTBILLEDDATEP",
+            "HEALTHCARECLAIMTYPEID1",
+            "HEALTHCARECLAIMTYPEID2"
+          ],
+          "row_filter": null,
+          "description": "보험청구 — 접근 불가 (업무 범위 밖)"
+        },
+        "claims_transactions": {
+          "allowed_operations": [],
+          "allowed_columns": [],
+          "denied_columns": [
+            "ID",
+            "CLAIMID",
+            "CHARGEID",
+            "PATIENTID",
+            "TYPE",
+            "AMOUNT",
+            "METHOD",
+            "FROMDATE",
+            "TODATE",
+            "PLACEOFSERVICE",
+            "PROCEDURECODE",
+            "MODIFIER1",
+            "MODIFIER2",
+            "DIAGNOSISREF1",
+            "DIAGNOSISREF2",
+            "DIAGNOSISREF3",
+            "DIAGNOSISREF4",
+            "UNITS",
+            "DEPARTMENTID",
+            "NOTES",
+            "UNITAMOUNT",
+            "TRANSFEROUTID",
+            "TRANSFERTYPE",
+            "PAYMENTS",
+            "ADJUSTMENTS",
+            "TRANSFERS",
+            "OUTSTANDING",
+            "APPOINTMENTID",
+            "LINENOTE",
+            "PATIENTINSURANCEID",
+            "FEESCHEDULEID",
+            "PROVIDERID",
+            "SUPERVISINGPROVIDERID"
+          ],
+          "row_filter": null,
+          "description": "청구 거래내역 — 접근 불가 (업무 범위 밖)"
+        },
+        "payer_transitions": {
+          "allowed_operations": [],
+          "allowed_columns": [],
+          "denied_columns": [
+            "PATIENT",
+            "MEMBERID",
+            "START_YEAR",
+            "END_YEAR",
+            "PAYER",
+            "SECONDARY_PAYER",
+            "OWNERSHIP",
+            "OWNERNAME"
+          ],
+          "row_filter": null,
+          "description": "보험 가입이력 — 접근 불가 (업무 범위 밖)"
+        },
+        "providers": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "Id",
+            "ORGANIZATION",
+            "NAME",
+            "SPECIALITY",
+            "CITY",
+            "STATE"
+          ],
+          "denied_columns": [
+            "GENDER",
+            "ADDRESS",
+            "ZIP",
+            "LAT",
+            "LON",
+            "UTILIZATION"
+          ],
+          "row_filter": null,
+          "description": "의료진 — 활력·투약·접종 입력/수정, 청구 접근 불가"
+        },
+        "organizations": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "Id",
+            "NAME",
+            "CITY",
+            "STATE",
+            "PHONE"
+          ],
+          "denied_columns": [
+            "ADDRESS",
+            "ZIP",
+            "LAT",
+            "LON",
+            "REVENUE",
+            "UTILIZATION"
+          ],
+          "row_filter": null,
+          "description": "의료기관 — 활력·투약·접종 입력/수정, 청구 접근 불가"
+        },
+        "payers": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "Id",
+            "NAME",
+            "CITY",
+            "PHONE"
+          ],
+          "denied_columns": [
+            "ADDRESS",
+            "STATE_HEADQUARTERED",
+            "ZIP",
+            "AMOUNT_COVERED",
+            "AMOUNT_UNCOVERED",
+            "REVENUE",
+            "COVERED_ENCOUNTERS",
+            "UNCOVERED_ENCOUNTERS",
+            "COVERED_MEDICATIONS",
+            "UNCOVERED_MEDICATIONS",
+            "COVERED_PROCEDURES",
+            "UNCOVERED_PROCEDURES",
+            "COVERED_IMMUNIZATIONS",
+            "UNCOVERED_IMMUNIZATIONS",
+            "UNIQUE_CUSTOMERS",
+            "QOLS_AVG",
+            "MEMBER_MONTHS"
+          ],
+          "row_filter": null,
+          "description": "보험사 — 활력·투약·접종 입력/수정, 청구 접근 불가"
+        }
+      }
+    },
+    "pharmacist": {
+      "role_name": "pharmacist",
+      "display_name": "약사 (Pharmacist)",
+      "description": "조제·복약지도·약물상호작용 검토 담당. 투약(medications)은 입력·수정 가능. 약물 안전성 검토를 위해 알레르기·진단·관찰은 조회. 그 외 임상은 최소 조회, 청구·재무는 접근 불가.",
+      "level": 6,
+      "table_permissions": {
+        "patients": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "Id",
+            "BIRTHDATE",
+            "FIRST",
+            "LAST",
+            "MARITAL",
+            "GENDER"
+          ],
+          "denied_columns": [
+            "DEATHDATE",
+            "SSN",
+            "DRIVERS",
+            "PASSPORT",
+            "PREFIX",
+            "SUFFIX",
+            "MAIDEN",
+            "RACE",
+            "ETHNICITY",
+            "BIRTHPLACE",
+            "ADDRESS",
+            "CITY",
+            "STATE",
+            "COUNTY",
+            "ZIP",
+            "LAT",
+            "LON",
+            "HEALTHCARE_EXPENSES",
+            "HEALTHCARE_COVERAGE"
+          ],
+          "row_filter": null,
+          "description": "환자(개인식별정보 PII) — 투약 조제 입력/수정, 알레르기·진단 조회"
+        },
+        "conditions": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "START",
+            "STOP",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "진단 — 투약 조제 입력/수정, 알레르기·진단 조회"
+        },
+        "medications": {
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE"
+          ],
+          "allowed_columns": [
+            "START",
+            "STOP",
+            "PATIENT",
+            "PAYER",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "BASE_COST",
+            "PAYER_COVERAGE",
+            "DISPENSES",
+            "TOTALCOST",
+            "REASONCODE",
+            "REASONDESCRIPTION"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "투약/처방 — 투약 조제 입력/수정, 알레르기·진단 조회"
+        },
+        "procedures": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "START",
+            "STOP",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "REASONCODE",
+            "REASONDESCRIPTION"
+          ],
+          "denied_columns": [
+            "BASE_COST"
+          ],
+          "row_filter": null,
+          "description": "시술 — 투약 조제 입력/수정, 알레르기·진단 조회"
+        },
+        "observations": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "DATE",
+            "PATIENT",
+            "ENCOUNTER",
+            "CATEGORY",
+            "CODE",
+            "DESCRIPTION",
+            "VALUE",
+            "UNITS",
+            "TYPE"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "관찰/검사결과 — 투약 조제 입력/수정, 알레르기·진단 조회"
+        },
+        "allergies": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "START",
+            "STOP",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "SYSTEM",
+            "DESCRIPTION",
+            "TYPE",
+            "CATEGORY",
+            "REACTION1",
+            "DESCRIPTION1",
+            "SEVERITY1",
+            "REACTION2",
+            "DESCRIPTION2",
+            "SEVERITY2"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "알레르기 — 투약 조제 입력/수정, 알레르기·진단 조회"
+        },
+        "immunizations": {
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE"
+          ],
+          "allowed_columns": [
+            "DATE",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "BASE_COST"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "예방접종 — 투약 조제 입력/수정, 알레르기·진단 조회"
+        },
+        "careplans": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "Id",
+            "START",
+            "STOP",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "REASONCODE",
+            "REASONDESCRIPTION"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "케어플랜 — 투약 조제 입력/수정, 알레르기·진단 조회"
+        },
+        "devices": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "START",
+            "STOP",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "UDI"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "의료기기 — 투약 조제 입력/수정, 알레르기·진단 조회"
+        },
+        "supplies": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "DATE",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "QUANTITY"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "의료용품 — 투약 조제 입력/수정, 알레르기·진단 조회"
+        },
+        "imaging_studies": {
+          "allowed_operations": [],
+          "allowed_columns": [],
+          "denied_columns": [
+            "Id",
+            "DATE",
+            "PATIENT",
+            "ENCOUNTER",
+            "SERIES_UID",
+            "BODYSITE_CODE",
+            "BODYSITE_DESCRIPTION",
+            "MODALITY_CODE",
+            "MODALITY_DESCRIPTION",
+            "INSTANCE_UID",
+            "SOP_CODE",
+            "SOP_DESCRIPTION",
+            "PROCEDURE_CODE"
+          ],
+          "row_filter": null,
+          "description": "영상검사 — 접근 불가 (업무 범위 밖)"
+        },
+        "encounters": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "Id",
+            "START",
+            "STOP",
+            "PATIENT",
+            "ORGANIZATION",
+            "PROVIDER",
+            "PAYER",
+            "ENCOUNTERCLASS",
+            "CODE",
+            "DESCRIPTION",
+            "REASONCODE",
+            "REASONDESCRIPTION"
+          ],
+          "denied_columns": [
+            "BASE_ENCOUNTER_COST",
+            "TOTAL_CLAIM_COST",
+            "PAYER_COVERAGE"
+          ],
+          "row_filter": null,
+          "description": "내원 기록 — 투약 조제 입력/수정, 알레르기·진단 조회"
+        },
+        "claims": {
+          "allowed_operations": [],
+          "allowed_columns": [],
+          "denied_columns": [
+            "Id",
+            "PATIENTID",
+            "PROVIDERID",
+            "PRIMARYPATIENTINSURANCEID",
+            "SECONDARYPATIENTINSURANCEID",
+            "DEPARTMENTID",
+            "PATIENTDEPARTMENTID",
+            "DIAGNOSIS1",
+            "DIAGNOSIS2",
+            "DIAGNOSIS3",
+            "DIAGNOSIS4",
+            "DIAGNOSIS5",
+            "DIAGNOSIS6",
+            "DIAGNOSIS7",
+            "DIAGNOSIS8",
+            "REFERRINGPROVIDERID",
+            "APPOINTMENTID",
+            "CURRENTILLNESSDATE",
+            "SERVICEDATE",
+            "SUPERVISINGPROVIDERID",
+            "STATUS1",
+            "STATUS2",
+            "STATUSP",
+            "OUTSTANDING1",
+            "OUTSTANDING2",
+            "OUTSTANDINGP",
+            "LASTBILLEDDATE1",
+            "LASTBILLEDDATE2",
+            "LASTBILLEDDATEP",
+            "HEALTHCARECLAIMTYPEID1",
+            "HEALTHCARECLAIMTYPEID2"
+          ],
+          "row_filter": null,
+          "description": "보험청구 — 접근 불가 (업무 범위 밖)"
+        },
+        "claims_transactions": {
+          "allowed_operations": [],
+          "allowed_columns": [],
+          "denied_columns": [
+            "ID",
+            "CLAIMID",
+            "CHARGEID",
+            "PATIENTID",
+            "TYPE",
+            "AMOUNT",
+            "METHOD",
+            "FROMDATE",
+            "TODATE",
+            "PLACEOFSERVICE",
+            "PROCEDURECODE",
+            "MODIFIER1",
+            "MODIFIER2",
+            "DIAGNOSISREF1",
+            "DIAGNOSISREF2",
+            "DIAGNOSISREF3",
+            "DIAGNOSISREF4",
+            "UNITS",
+            "DEPARTMENTID",
+            "NOTES",
+            "UNITAMOUNT",
+            "TRANSFEROUTID",
+            "TRANSFERTYPE",
+            "PAYMENTS",
+            "ADJUSTMENTS",
+            "TRANSFERS",
+            "OUTSTANDING",
+            "APPOINTMENTID",
+            "LINENOTE",
+            "PATIENTINSURANCEID",
+            "FEESCHEDULEID",
+            "PROVIDERID",
+            "SUPERVISINGPROVIDERID"
+          ],
+          "row_filter": null,
+          "description": "청구 거래내역 — 접근 불가 (업무 범위 밖)"
+        },
+        "payer_transitions": {
+          "allowed_operations": [],
+          "allowed_columns": [],
+          "denied_columns": [
+            "PATIENT",
+            "MEMBERID",
+            "START_YEAR",
+            "END_YEAR",
+            "PAYER",
+            "SECONDARY_PAYER",
+            "OWNERSHIP",
+            "OWNERNAME"
+          ],
+          "row_filter": null,
+          "description": "보험 가입이력 — 접근 불가 (업무 범위 밖)"
+        },
+        "providers": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "Id",
+            "ORGANIZATION",
+            "NAME",
+            "SPECIALITY"
+          ],
+          "denied_columns": [
+            "GENDER",
+            "ADDRESS",
+            "CITY",
+            "STATE",
+            "ZIP",
+            "LAT",
+            "LON",
+            "UTILIZATION"
+          ],
+          "row_filter": null,
+          "description": "의료진 — 투약 조제 입력/수정, 알레르기·진단 조회"
+        },
+        "organizations": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "Id",
+            "NAME"
+          ],
+          "denied_columns": [
+            "ADDRESS",
+            "CITY",
+            "STATE",
+            "ZIP",
+            "LAT",
+            "LON",
+            "PHONE",
+            "REVENUE",
+            "UTILIZATION"
+          ],
+          "row_filter": null,
+          "description": "의료기관 — 투약 조제 입력/수정, 알레르기·진단 조회"
+        },
+        "payers": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "Id",
+            "NAME"
+          ],
+          "denied_columns": [
+            "ADDRESS",
+            "CITY",
+            "STATE_HEADQUARTERED",
+            "ZIP",
+            "PHONE",
+            "AMOUNT_COVERED",
+            "AMOUNT_UNCOVERED",
+            "REVENUE",
+            "COVERED_ENCOUNTERS",
+            "UNCOVERED_ENCOUNTERS",
+            "COVERED_MEDICATIONS",
+            "UNCOVERED_MEDICATIONS",
+            "COVERED_PROCEDURES",
+            "UNCOVERED_PROCEDURES",
+            "COVERED_IMMUNIZATIONS",
+            "UNCOVERED_IMMUNIZATIONS",
+            "UNIQUE_CUSTOMERS",
+            "QOLS_AVG",
+            "MEMBER_MONTHS"
+          ],
+          "row_filter": null,
+          "description": "보험사 — 투약 조제 입력/수정, 알레르기·진단 조회"
+        }
+      }
+    },
+    "clinical_technician": {
+      "role_name": "clinical_technician",
+      "display_name": "임상병리·영상 기사 (Clinical / Imaging Technician)",
+      "description": "검사·영상 결과 등록 담당. 관찰(검사결과)·영상검사·의료기기 정보를 입력·수정. 검사 의뢰 확인을 위해 내원·시술은 조회. 진단·처방 변경 권한과 청구 접근은 없음.",
+      "level": 7,
+      "table_permissions": {
+        "patients": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "Id",
+            "BIRTHDATE",
+            "FIRST",
+            "LAST",
+            "MARITAL",
+            "GENDER"
+          ],
+          "denied_columns": [
+            "DEATHDATE",
+            "SSN",
+            "DRIVERS",
+            "PASSPORT",
+            "PREFIX",
+            "SUFFIX",
+            "MAIDEN",
+            "RACE",
+            "ETHNICITY",
+            "BIRTHPLACE",
+            "ADDRESS",
+            "CITY",
+            "STATE",
+            "COUNTY",
+            "ZIP",
+            "LAT",
+            "LON",
+            "HEALTHCARE_EXPENSES",
+            "HEALTHCARE_COVERAGE"
+          ],
+          "row_filter": null,
+          "description": "환자(개인식별정보 PII) — 검사·영상 결과 입력/수정, 진단 변경·청구 불가"
+        },
+        "conditions": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "START",
+            "STOP",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "진단 — 검사·영상 결과 입력/수정, 진단 변경·청구 불가"
+        },
+        "medications": {
+          "allowed_operations": [],
+          "allowed_columns": [],
+          "denied_columns": [
+            "START",
+            "STOP",
+            "PATIENT",
+            "PAYER",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "BASE_COST",
+            "PAYER_COVERAGE",
+            "DISPENSES",
+            "TOTALCOST",
+            "REASONCODE",
+            "REASONDESCRIPTION"
+          ],
+          "row_filter": null,
+          "description": "투약/처방 — 접근 불가 (업무 범위 밖)"
+        },
+        "procedures": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "START",
+            "STOP",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "REASONCODE",
+            "REASONDESCRIPTION"
+          ],
+          "denied_columns": [
+            "BASE_COST"
+          ],
+          "row_filter": null,
+          "description": "시술 — 검사·영상 결과 입력/수정, 진단 변경·청구 불가"
+        },
+        "observations": {
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE"
+          ],
+          "allowed_columns": [
+            "DATE",
+            "PATIENT",
+            "ENCOUNTER",
+            "CATEGORY",
+            "CODE",
+            "DESCRIPTION",
+            "VALUE",
+            "UNITS",
+            "TYPE"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "관찰/검사결과 — 검사·영상 결과 입력/수정, 진단 변경·청구 불가"
+        },
+        "allergies": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "START",
+            "STOP",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "SYSTEM",
+            "DESCRIPTION",
+            "TYPE",
+            "CATEGORY",
+            "REACTION1",
+            "DESCRIPTION1",
+            "SEVERITY1",
+            "REACTION2",
+            "DESCRIPTION2",
+            "SEVERITY2"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "알레르기 — 검사·영상 결과 입력/수정, 진단 변경·청구 불가"
+        },
+        "immunizations": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "DATE",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "BASE_COST"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "예방접종 — 검사·영상 결과 입력/수정, 진단 변경·청구 불가"
+        },
+        "careplans": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "Id",
+            "START",
+            "STOP",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "REASONCODE",
+            "REASONDESCRIPTION"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "케어플랜 — 검사·영상 결과 입력/수정, 진단 변경·청구 불가"
+        },
+        "devices": {
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE"
+          ],
+          "allowed_columns": [
+            "START",
+            "STOP",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "UDI"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "의료기기 — 검사·영상 결과 입력/수정, 진단 변경·청구 불가"
+        },
+        "supplies": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "DATE",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "QUANTITY"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "의료용품 — 검사·영상 결과 입력/수정, 진단 변경·청구 불가"
+        },
+        "imaging_studies": {
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE"
+          ],
+          "allowed_columns": [
+            "Id",
+            "DATE",
+            "PATIENT",
+            "ENCOUNTER",
+            "SERIES_UID",
+            "BODYSITE_CODE",
+            "BODYSITE_DESCRIPTION",
+            "MODALITY_CODE",
+            "MODALITY_DESCRIPTION",
+            "INSTANCE_UID",
+            "SOP_CODE",
+            "SOP_DESCRIPTION",
+            "PROCEDURE_CODE"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "영상검사 — 검사·영상 결과 입력/수정, 진단 변경·청구 불가"
+        },
+        "encounters": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "Id",
+            "START",
+            "STOP",
+            "PATIENT",
+            "ORGANIZATION",
+            "PROVIDER",
+            "PAYER",
+            "ENCOUNTERCLASS",
+            "CODE",
+            "DESCRIPTION",
+            "REASONCODE",
+            "REASONDESCRIPTION"
+          ],
+          "denied_columns": [
+            "BASE_ENCOUNTER_COST",
+            "TOTAL_CLAIM_COST",
+            "PAYER_COVERAGE"
+          ],
+          "row_filter": null,
+          "description": "내원 기록 — 검사·영상 결과 입력/수정, 진단 변경·청구 불가"
+        },
+        "claims": {
+          "allowed_operations": [],
+          "allowed_columns": [],
+          "denied_columns": [
+            "Id",
+            "PATIENTID",
+            "PROVIDERID",
+            "PRIMARYPATIENTINSURANCEID",
+            "SECONDARYPATIENTINSURANCEID",
+            "DEPARTMENTID",
+            "PATIENTDEPARTMENTID",
+            "DIAGNOSIS1",
+            "DIAGNOSIS2",
+            "DIAGNOSIS3",
+            "DIAGNOSIS4",
+            "DIAGNOSIS5",
+            "DIAGNOSIS6",
+            "DIAGNOSIS7",
+            "DIAGNOSIS8",
+            "REFERRINGPROVIDERID",
+            "APPOINTMENTID",
+            "CURRENTILLNESSDATE",
+            "SERVICEDATE",
+            "SUPERVISINGPROVIDERID",
+            "STATUS1",
+            "STATUS2",
+            "STATUSP",
+            "OUTSTANDING1",
+            "OUTSTANDING2",
+            "OUTSTANDINGP",
+            "LASTBILLEDDATE1",
+            "LASTBILLEDDATE2",
+            "LASTBILLEDDATEP",
+            "HEALTHCARECLAIMTYPEID1",
+            "HEALTHCARECLAIMTYPEID2"
+          ],
+          "row_filter": null,
+          "description": "보험청구 — 접근 불가 (업무 범위 밖)"
+        },
+        "claims_transactions": {
+          "allowed_operations": [],
+          "allowed_columns": [],
+          "denied_columns": [
+            "ID",
+            "CLAIMID",
+            "CHARGEID",
+            "PATIENTID",
+            "TYPE",
+            "AMOUNT",
+            "METHOD",
+            "FROMDATE",
+            "TODATE",
+            "PLACEOFSERVICE",
+            "PROCEDURECODE",
+            "MODIFIER1",
+            "MODIFIER2",
+            "DIAGNOSISREF1",
+            "DIAGNOSISREF2",
+            "DIAGNOSISREF3",
+            "DIAGNOSISREF4",
+            "UNITS",
+            "DEPARTMENTID",
+            "NOTES",
+            "UNITAMOUNT",
+            "TRANSFEROUTID",
+            "TRANSFERTYPE",
+            "PAYMENTS",
+            "ADJUSTMENTS",
+            "TRANSFERS",
+            "OUTSTANDING",
+            "APPOINTMENTID",
+            "LINENOTE",
+            "PATIENTINSURANCEID",
+            "FEESCHEDULEID",
+            "PROVIDERID",
+            "SUPERVISINGPROVIDERID"
+          ],
+          "row_filter": null,
+          "description": "청구 거래내역 — 접근 불가 (업무 범위 밖)"
+        },
+        "payer_transitions": {
+          "allowed_operations": [],
+          "allowed_columns": [],
+          "denied_columns": [
+            "PATIENT",
+            "MEMBERID",
+            "START_YEAR",
+            "END_YEAR",
+            "PAYER",
+            "SECONDARY_PAYER",
+            "OWNERSHIP",
+            "OWNERNAME"
+          ],
+          "row_filter": null,
+          "description": "보험 가입이력 — 접근 불가 (업무 범위 밖)"
+        },
+        "providers": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "Id",
+            "ORGANIZATION",
+            "NAME",
+            "SPECIALITY"
+          ],
+          "denied_columns": [
+            "GENDER",
+            "ADDRESS",
+            "CITY",
+            "STATE",
+            "ZIP",
+            "LAT",
+            "LON",
+            "UTILIZATION"
+          ],
+          "row_filter": null,
+          "description": "의료진 — 검사·영상 결과 입력/수정, 진단 변경·청구 불가"
+        },
+        "organizations": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "Id",
+            "NAME"
+          ],
+          "denied_columns": [
+            "ADDRESS",
+            "CITY",
+            "STATE",
+            "ZIP",
+            "LAT",
+            "LON",
+            "PHONE",
+            "REVENUE",
+            "UTILIZATION"
+          ],
+          "row_filter": null,
+          "description": "의료기관 — 검사·영상 결과 입력/수정, 진단 변경·청구 불가"
+        },
+        "payers": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "Id",
+            "NAME"
+          ],
+          "denied_columns": [
+            "ADDRESS",
+            "CITY",
+            "STATE_HEADQUARTERED",
+            "ZIP",
+            "PHONE",
+            "AMOUNT_COVERED",
+            "AMOUNT_UNCOVERED",
+            "REVENUE",
+            "COVERED_ENCOUNTERS",
+            "UNCOVERED_ENCOUNTERS",
+            "COVERED_MEDICATIONS",
+            "UNCOVERED_MEDICATIONS",
+            "COVERED_PROCEDURES",
+            "UNCOVERED_PROCEDURES",
+            "COVERED_IMMUNIZATIONS",
+            "UNCOVERED_IMMUNIZATIONS",
+            "UNIQUE_CUSTOMERS",
+            "QOLS_AVG",
+            "MEMBER_MONTHS"
+          ],
+          "row_filter": null,
+          "description": "보험사 — 검사·영상 결과 입력/수정, 진단 변경·청구 불가"
+        }
+      }
+    },
+    "medical_coder": {
+      "role_name": "medical_coder",
+      "display_name": "의료코딩·청구 담당 (Medical Coder / Biller)",
+      "description": "진단·시술 코드를 부여하고 보험 청구를 생성·관리. 청구 테이블은 입력·수정 가능. 임상 기록은 코딩 근거 확인용으로 조회만 가능하며 변경 불가. 환자 PII는 연결 키(Id) 외 접근 불가.",
+      "level": 8,
+      "table_permissions": {
+        "patients": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "Id"
+          ],
+          "denied_columns": [
+            "BIRTHDATE",
+            "DEATHDATE",
+            "SSN",
+            "DRIVERS",
+            "PASSPORT",
+            "PREFIX",
+            "FIRST",
+            "LAST",
+            "SUFFIX",
+            "MAIDEN",
+            "MARITAL",
+            "RACE",
+            "ETHNICITY",
+            "GENDER",
+            "BIRTHPLACE",
+            "ADDRESS",
+            "CITY",
+            "STATE",
+            "COUNTY",
+            "ZIP",
+            "LAT",
+            "LON",
+            "HEALTHCARE_EXPENSES",
+            "HEALTHCARE_COVERAGE"
+          ],
+          "row_filter": null,
+          "description": "환자(개인식별정보 PII) — 청구 생성/수정, 임상은 코딩용 조회, 환자 PII 차단"
+        },
+        "conditions": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "START",
+            "STOP",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "진단 — 청구 생성/수정, 임상은 코딩용 조회, 환자 PII 차단"
+        },
+        "medications": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "START",
+            "STOP",
+            "PATIENT",
+            "PAYER",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "BASE_COST",
+            "PAYER_COVERAGE",
+            "DISPENSES",
+            "TOTALCOST",
+            "REASONCODE",
+            "REASONDESCRIPTION"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "투약/처방 — 청구 생성/수정, 임상은 코딩용 조회, 환자 PII 차단"
+        },
+        "procedures": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "START",
+            "STOP",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "BASE_COST",
+            "REASONCODE",
+            "REASONDESCRIPTION"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "시술 — 청구 생성/수정, 임상은 코딩용 조회, 환자 PII 차단"
+        },
+        "observations": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "DATE",
+            "PATIENT",
+            "ENCOUNTER",
+            "CATEGORY",
+            "CODE",
+            "DESCRIPTION",
+            "VALUE",
+            "UNITS",
+            "TYPE"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "관찰/검사결과 — 청구 생성/수정, 임상은 코딩용 조회, 환자 PII 차단"
+        },
+        "allergies": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "START",
+            "STOP",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "SYSTEM",
+            "DESCRIPTION",
+            "TYPE",
+            "CATEGORY",
+            "REACTION1",
+            "DESCRIPTION1",
+            "SEVERITY1",
+            "REACTION2",
+            "DESCRIPTION2",
+            "SEVERITY2"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "알레르기 — 청구 생성/수정, 임상은 코딩용 조회, 환자 PII 차단"
+        },
+        "immunizations": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "DATE",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "BASE_COST"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "예방접종 — 청구 생성/수정, 임상은 코딩용 조회, 환자 PII 차단"
+        },
+        "careplans": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "Id",
+            "START",
+            "STOP",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "REASONCODE",
+            "REASONDESCRIPTION"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "케어플랜 — 청구 생성/수정, 임상은 코딩용 조회, 환자 PII 차단"
+        },
+        "devices": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "START",
+            "STOP",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "UDI"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "의료기기 — 청구 생성/수정, 임상은 코딩용 조회, 환자 PII 차단"
+        },
+        "supplies": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "DATE",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "QUANTITY"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "의료용품 — 청구 생성/수정, 임상은 코딩용 조회, 환자 PII 차단"
+        },
+        "imaging_studies": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "Id",
+            "DATE",
+            "PATIENT",
+            "ENCOUNTER",
+            "SERIES_UID",
+            "BODYSITE_CODE",
+            "BODYSITE_DESCRIPTION",
+            "MODALITY_CODE",
+            "MODALITY_DESCRIPTION",
+            "INSTANCE_UID",
+            "SOP_CODE",
+            "SOP_DESCRIPTION",
+            "PROCEDURE_CODE"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "영상검사 — 청구 생성/수정, 임상은 코딩용 조회, 환자 PII 차단"
+        },
+        "encounters": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "Id",
+            "START",
+            "STOP",
+            "PATIENT",
+            "ORGANIZATION",
+            "PROVIDER",
+            "PAYER",
+            "ENCOUNTERCLASS",
+            "CODE",
+            "DESCRIPTION",
+            "BASE_ENCOUNTER_COST",
+            "TOTAL_CLAIM_COST",
+            "PAYER_COVERAGE",
+            "REASONCODE",
+            "REASONDESCRIPTION"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "내원 기록 — 청구 생성/수정, 임상은 코딩용 조회, 환자 PII 차단"
+        },
+        "claims": {
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE"
+          ],
+          "allowed_columns": [
+            "Id",
+            "PATIENTID",
+            "PROVIDERID",
+            "PRIMARYPATIENTINSURANCEID",
+            "SECONDARYPATIENTINSURANCEID",
+            "DEPARTMENTID",
+            "PATIENTDEPARTMENTID",
+            "DIAGNOSIS1",
+            "DIAGNOSIS2",
+            "DIAGNOSIS3",
+            "DIAGNOSIS4",
+            "DIAGNOSIS5",
+            "DIAGNOSIS6",
+            "DIAGNOSIS7",
+            "DIAGNOSIS8",
+            "REFERRINGPROVIDERID",
+            "APPOINTMENTID",
+            "CURRENTILLNESSDATE",
+            "SERVICEDATE",
+            "SUPERVISINGPROVIDERID",
+            "STATUS1",
+            "STATUS2",
+            "STATUSP",
+            "OUTSTANDING1",
+            "OUTSTANDING2",
+            "OUTSTANDINGP",
+            "LASTBILLEDDATE1",
+            "LASTBILLEDDATE2",
+            "LASTBILLEDDATEP",
+            "HEALTHCARECLAIMTYPEID1",
+            "HEALTHCARECLAIMTYPEID2"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "보험청구 — 청구 생성/수정, 임상은 코딩용 조회, 환자 PII 차단"
+        },
+        "claims_transactions": {
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE"
+          ],
+          "allowed_columns": [
+            "ID",
+            "CLAIMID",
+            "CHARGEID",
+            "PATIENTID",
+            "TYPE",
+            "AMOUNT",
+            "METHOD",
+            "FROMDATE",
+            "TODATE",
+            "PLACEOFSERVICE",
+            "PROCEDURECODE",
+            "MODIFIER1",
+            "MODIFIER2",
+            "DIAGNOSISREF1",
+            "DIAGNOSISREF2",
+            "DIAGNOSISREF3",
+            "DIAGNOSISREF4",
+            "UNITS",
+            "DEPARTMENTID",
+            "NOTES",
+            "UNITAMOUNT",
+            "TRANSFEROUTID",
+            "TRANSFERTYPE",
+            "PAYMENTS",
+            "ADJUSTMENTS",
+            "TRANSFERS",
+            "OUTSTANDING",
+            "APPOINTMENTID",
+            "LINENOTE",
+            "PATIENTINSURANCEID",
+            "FEESCHEDULEID",
+            "PROVIDERID",
+            "SUPERVISINGPROVIDERID"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "청구 거래내역 — 청구 생성/수정, 임상은 코딩용 조회, 환자 PII 차단"
+        },
+        "payer_transitions": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "PATIENT",
+            "MEMBERID",
+            "START_YEAR",
+            "END_YEAR",
+            "PAYER",
+            "SECONDARY_PAYER",
+            "OWNERSHIP",
+            "OWNERNAME"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "보험 가입이력 — 청구 생성/수정, 임상은 코딩용 조회, 환자 PII 차단"
+        },
+        "providers": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "Id",
+            "ORGANIZATION",
+            "NAME",
+            "GENDER",
+            "SPECIALITY",
+            "ADDRESS",
+            "CITY",
+            "STATE",
+            "ZIP",
+            "LAT",
+            "LON",
+            "UTILIZATION"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "의료진 — 청구 생성/수정, 임상은 코딩용 조회, 환자 PII 차단"
+        },
+        "organizations": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "Id",
+            "NAME",
+            "ADDRESS",
+            "CITY",
+            "STATE",
+            "ZIP",
+            "LAT",
+            "LON",
+            "PHONE",
+            "REVENUE",
+            "UTILIZATION"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "의료기관 — 청구 생성/수정, 임상은 코딩용 조회, 환자 PII 차단"
+        },
+        "payers": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "Id",
+            "NAME",
+            "ADDRESS",
+            "CITY",
+            "STATE_HEADQUARTERED",
+            "ZIP",
+            "PHONE",
+            "AMOUNT_COVERED",
+            "AMOUNT_UNCOVERED",
+            "REVENUE",
+            "COVERED_ENCOUNTERS",
+            "UNCOVERED_ENCOUNTERS",
+            "COVERED_MEDICATIONS",
+            "UNCOVERED_MEDICATIONS",
+            "COVERED_PROCEDURES",
+            "UNCOVERED_PROCEDURES",
+            "COVERED_IMMUNIZATIONS",
+            "UNCOVERED_IMMUNIZATIONS",
+            "UNIQUE_CUSTOMERS",
+            "QOLS_AVG",
+            "MEMBER_MONTHS"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "보험사 — 청구 생성/수정, 임상은 코딩용 조회, 환자 PII 차단"
+        }
+      }
+    },
+    "registration_clerk": {
+      "role_name": "registration_clerk",
+      "display_name": "원무 / 접수 (Registration Clerk)",
+      "description": "환자 등록·보험 접수·내원 예약 담당. 환자 인적·주소·연락 정보와 보험 가입 이력을 입력·수정. 임상 상세는 접근 불가. 법정 식별번호(SSN 등)와 재무 정보는 마스킹되어 보이지 않음.",
+      "level": 9,
+      "table_permissions": {
+        "patients": {
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE"
+          ],
+          "allowed_columns": [
+            "Id",
+            "BIRTHDATE",
+            "DEATHDATE",
+            "PREFIX",
+            "FIRST",
+            "LAST",
+            "SUFFIX",
+            "MAIDEN",
+            "MARITAL",
+            "RACE",
+            "ETHNICITY",
+            "GENDER",
+            "BIRTHPLACE",
+            "ADDRESS",
+            "CITY",
+            "STATE",
+            "COUNTY",
+            "ZIP",
+            "LAT",
+            "LON"
+          ],
+          "denied_columns": [
+            "SSN",
+            "DRIVERS",
+            "PASSPORT",
+            "HEALTHCARE_EXPENSES",
+            "HEALTHCARE_COVERAGE"
+          ],
+          "row_filter": null,
+          "description": "환자(개인식별정보 PII) — 환자등록·보험접수 입력/수정, 임상 불가, SSN·재무 마스킹"
+        },
+        "conditions": {
+          "allowed_operations": [],
+          "allowed_columns": [],
+          "denied_columns": [
+            "START",
+            "STOP",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION"
+          ],
+          "row_filter": null,
+          "description": "진단 — 접근 불가 (업무 범위 밖)"
+        },
+        "medications": {
+          "allowed_operations": [],
+          "allowed_columns": [],
+          "denied_columns": [
+            "START",
+            "STOP",
+            "PATIENT",
+            "PAYER",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "BASE_COST",
+            "PAYER_COVERAGE",
+            "DISPENSES",
+            "TOTALCOST",
+            "REASONCODE",
+            "REASONDESCRIPTION"
+          ],
+          "row_filter": null,
+          "description": "투약/처방 — 접근 불가 (업무 범위 밖)"
+        },
+        "procedures": {
+          "allowed_operations": [],
+          "allowed_columns": [],
+          "denied_columns": [
+            "START",
+            "STOP",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "BASE_COST",
+            "REASONCODE",
+            "REASONDESCRIPTION"
+          ],
+          "row_filter": null,
+          "description": "시술 — 접근 불가 (업무 범위 밖)"
+        },
+        "observations": {
+          "allowed_operations": [],
+          "allowed_columns": [],
+          "denied_columns": [
+            "DATE",
+            "PATIENT",
+            "ENCOUNTER",
+            "CATEGORY",
+            "CODE",
+            "DESCRIPTION",
+            "VALUE",
+            "UNITS",
+            "TYPE"
+          ],
+          "row_filter": null,
+          "description": "관찰/검사결과 — 접근 불가 (업무 범위 밖)"
+        },
+        "allergies": {
+          "allowed_operations": [],
+          "allowed_columns": [],
+          "denied_columns": [
+            "START",
+            "STOP",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "SYSTEM",
+            "DESCRIPTION",
+            "TYPE",
+            "CATEGORY",
+            "REACTION1",
+            "DESCRIPTION1",
+            "SEVERITY1",
+            "REACTION2",
+            "DESCRIPTION2",
+            "SEVERITY2"
+          ],
+          "row_filter": null,
+          "description": "알레르기 — 접근 불가 (업무 범위 밖)"
+        },
+        "immunizations": {
+          "allowed_operations": [],
+          "allowed_columns": [],
+          "denied_columns": [
+            "DATE",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "BASE_COST"
+          ],
+          "row_filter": null,
+          "description": "예방접종 — 접근 불가 (업무 범위 밖)"
+        },
+        "careplans": {
+          "allowed_operations": [],
+          "allowed_columns": [],
+          "denied_columns": [
+            "Id",
+            "START",
+            "STOP",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "REASONCODE",
+            "REASONDESCRIPTION"
+          ],
+          "row_filter": null,
+          "description": "케어플랜 — 접근 불가 (업무 범위 밖)"
+        },
+        "devices": {
+          "allowed_operations": [],
+          "allowed_columns": [],
+          "denied_columns": [
+            "START",
+            "STOP",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "UDI"
+          ],
+          "row_filter": null,
+          "description": "의료기기 — 접근 불가 (업무 범위 밖)"
+        },
+        "supplies": {
+          "allowed_operations": [],
+          "allowed_columns": [],
+          "denied_columns": [
+            "DATE",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "QUANTITY"
+          ],
+          "row_filter": null,
+          "description": "의료용품 — 접근 불가 (업무 범위 밖)"
+        },
+        "imaging_studies": {
+          "allowed_operations": [],
+          "allowed_columns": [],
+          "denied_columns": [
+            "Id",
+            "DATE",
+            "PATIENT",
+            "ENCOUNTER",
+            "SERIES_UID",
+            "BODYSITE_CODE",
+            "BODYSITE_DESCRIPTION",
+            "MODALITY_CODE",
+            "MODALITY_DESCRIPTION",
+            "INSTANCE_UID",
+            "SOP_CODE",
+            "SOP_DESCRIPTION",
+            "PROCEDURE_CODE"
+          ],
+          "row_filter": null,
+          "description": "영상검사 — 접근 불가 (업무 범위 밖)"
+        },
+        "encounters": {
+          "allowed_operations": [
+            "SELECT",
+            "INSERT"
+          ],
+          "allowed_columns": [
+            "Id",
+            "START",
+            "STOP",
+            "PATIENT",
+            "ORGANIZATION",
+            "PROVIDER",
+            "PAYER",
+            "ENCOUNTERCLASS",
+            "CODE",
+            "DESCRIPTION",
+            "BASE_ENCOUNTER_COST",
+            "REASONCODE",
+            "REASONDESCRIPTION"
+          ],
+          "denied_columns": [
+            "TOTAL_CLAIM_COST",
+            "PAYER_COVERAGE"
+          ],
+          "row_filter": null,
+          "description": "내원 기록 — 환자등록·보험접수 입력/수정, 임상 불가, SSN·재무 마스킹"
+        },
+        "claims": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "Id",
+            "PATIENTID",
+            "PROVIDERID",
+            "PRIMARYPATIENTINSURANCEID",
+            "SERVICEDATE",
+            "STATUS1"
+          ],
+          "denied_columns": [
+            "SECONDARYPATIENTINSURANCEID",
+            "DEPARTMENTID",
+            "PATIENTDEPARTMENTID",
+            "DIAGNOSIS1",
+            "DIAGNOSIS2",
+            "DIAGNOSIS3",
+            "DIAGNOSIS4",
+            "DIAGNOSIS5",
+            "DIAGNOSIS6",
+            "DIAGNOSIS7",
+            "DIAGNOSIS8",
+            "REFERRINGPROVIDERID",
+            "APPOINTMENTID",
+            "CURRENTILLNESSDATE",
+            "SUPERVISINGPROVIDERID",
+            "STATUS2",
+            "STATUSP",
+            "OUTSTANDING1",
+            "OUTSTANDING2",
+            "OUTSTANDINGP",
+            "LASTBILLEDDATE1",
+            "LASTBILLEDDATE2",
+            "LASTBILLEDDATEP",
+            "HEALTHCARECLAIMTYPEID1",
+            "HEALTHCARECLAIMTYPEID2"
+          ],
+          "row_filter": null,
+          "description": "보험청구 — 환자등록·보험접수 입력/수정, 임상 불가, SSN·재무 마스킹"
+        },
+        "claims_transactions": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "ID",
+            "CLAIMID",
+            "PATIENTID",
+            "TYPE",
+            "OUTSTANDING"
+          ],
+          "denied_columns": [
+            "CHARGEID",
+            "AMOUNT",
+            "METHOD",
+            "FROMDATE",
+            "TODATE",
+            "PLACEOFSERVICE",
+            "PROCEDURECODE",
+            "MODIFIER1",
+            "MODIFIER2",
+            "DIAGNOSISREF1",
+            "DIAGNOSISREF2",
+            "DIAGNOSISREF3",
+            "DIAGNOSISREF4",
+            "UNITS",
+            "DEPARTMENTID",
+            "NOTES",
+            "UNITAMOUNT",
+            "TRANSFEROUTID",
+            "TRANSFERTYPE",
+            "PAYMENTS",
+            "ADJUSTMENTS",
+            "TRANSFERS",
+            "APPOINTMENTID",
+            "LINENOTE",
+            "PATIENTINSURANCEID",
+            "FEESCHEDULEID",
+            "PROVIDERID",
+            "SUPERVISINGPROVIDERID"
+          ],
+          "row_filter": null,
+          "description": "청구 거래내역 — 환자등록·보험접수 입력/수정, 임상 불가, SSN·재무 마스킹"
+        },
+        "payer_transitions": {
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE"
+          ],
+          "allowed_columns": [
+            "PATIENT",
+            "MEMBERID",
+            "START_YEAR",
+            "END_YEAR",
+            "PAYER",
+            "SECONDARY_PAYER",
+            "OWNERSHIP",
+            "OWNERNAME"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "보험 가입이력 — 환자등록·보험접수 입력/수정, 임상 불가, SSN·재무 마스킹"
+        },
+        "providers": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "Id",
+            "ORGANIZATION",
+            "NAME",
+            "SPECIALITY"
+          ],
+          "denied_columns": [
+            "GENDER",
+            "ADDRESS",
+            "CITY",
+            "STATE",
+            "ZIP",
+            "LAT",
+            "LON",
+            "UTILIZATION"
+          ],
+          "row_filter": null,
+          "description": "의료진 — 환자등록·보험접수 입력/수정, 임상 불가, SSN·재무 마스킹"
+        },
+        "organizations": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "Id",
+            "NAME",
+            "ADDRESS",
+            "CITY",
+            "STATE",
+            "ZIP",
+            "PHONE"
+          ],
+          "denied_columns": [
+            "LAT",
+            "LON",
+            "REVENUE",
+            "UTILIZATION"
+          ],
+          "row_filter": null,
+          "description": "의료기관 — 환자등록·보험접수 입력/수정, 임상 불가, SSN·재무 마스킹"
+        },
+        "payers": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "Id",
+            "NAME",
+            "ADDRESS",
+            "CITY",
+            "STATE_HEADQUARTERED",
+            "ZIP",
+            "PHONE"
+          ],
+          "denied_columns": [
+            "AMOUNT_COVERED",
+            "AMOUNT_UNCOVERED",
+            "REVENUE",
+            "COVERED_ENCOUNTERS",
+            "UNCOVERED_ENCOUNTERS",
+            "COVERED_MEDICATIONS",
+            "UNCOVERED_MEDICATIONS",
+            "COVERED_PROCEDURES",
+            "UNCOVERED_PROCEDURES",
+            "COVERED_IMMUNIZATIONS",
+            "UNCOVERED_IMMUNIZATIONS",
+            "UNIQUE_CUSTOMERS",
+            "QOLS_AVG",
+            "MEMBER_MONTHS"
+          ],
+          "row_filter": null,
+          "description": "보험사 — 환자등록·보험접수 입력/수정, 임상 불가, SSN·재무 마스킹"
+        }
+      }
+    },
+    "insurance_examiner": {
+      "role_name": "insurance_examiner",
+      "display_name": "보험심사역 (Insurance Claims Examiner)",
+      "description": "보험사 측 청구 적정성 심사·지급 담당. 청구·거래·보험 가입 이력을 조회하고 청구 상태를 갱신. 의학적 필요성 확인을 위해 진단 코드만 조회. 환자 직접 식별자(이름·주소·법정ID)는 차단.",
+      "level": 10,
+      "table_permissions": {
+        "patients": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "Id",
+            "BIRTHDATE",
+            "GENDER",
+            "STATE",
+            "ZIP",
+            "HEALTHCARE_EXPENSES",
+            "HEALTHCARE_COVERAGE"
+          ],
+          "denied_columns": [
+            "DEATHDATE",
+            "SSN",
+            "DRIVERS",
+            "PASSPORT",
+            "PREFIX",
+            "FIRST",
+            "LAST",
+            "SUFFIX",
+            "MAIDEN",
+            "MARITAL",
+            "RACE",
+            "ETHNICITY",
+            "BIRTHPLACE",
+            "ADDRESS",
+            "CITY",
+            "COUNTY",
+            "LAT",
+            "LON"
+          ],
+          "row_filter": null,
+          "description": "환자(개인식별정보 PII) — 청구 심사·상태 갱신, 진단코드만 조회, 직접식별자 차단"
+        },
+        "conditions": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION"
+          ],
+          "denied_columns": [
+            "START",
+            "STOP"
+          ],
+          "row_filter": null,
+          "description": "진단 — 청구 심사·상태 갱신, 진단코드만 조회, 직접식별자 차단"
+        },
+        "medications": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "PAYER_COVERAGE",
+            "TOTALCOST"
+          ],
+          "denied_columns": [
+            "START",
+            "STOP",
+            "PAYER",
+            "BASE_COST",
+            "DISPENSES",
+            "REASONCODE",
+            "REASONDESCRIPTION"
+          ],
+          "row_filter": null,
+          "description": "투약/처방 — 청구 심사·상태 갱신, 진단코드만 조회, 직접식별자 차단"
+        },
+        "procedures": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "BASE_COST"
+          ],
+          "denied_columns": [
+            "START",
+            "STOP",
+            "REASONCODE",
+            "REASONDESCRIPTION"
+          ],
+          "row_filter": null,
+          "description": "시술 — 청구 심사·상태 갱신, 진단코드만 조회, 직접식별자 차단"
+        },
+        "observations": {
+          "allowed_operations": [],
+          "allowed_columns": [],
+          "denied_columns": [
+            "DATE",
+            "PATIENT",
+            "ENCOUNTER",
+            "CATEGORY",
+            "CODE",
+            "DESCRIPTION",
+            "VALUE",
+            "UNITS",
+            "TYPE"
+          ],
+          "row_filter": null,
+          "description": "관찰/검사결과 — 접근 불가 (업무 범위 밖)"
+        },
+        "allergies": {
+          "allowed_operations": [],
+          "allowed_columns": [],
+          "denied_columns": [
+            "START",
+            "STOP",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "SYSTEM",
+            "DESCRIPTION",
+            "TYPE",
+            "CATEGORY",
+            "REACTION1",
+            "DESCRIPTION1",
+            "SEVERITY1",
+            "REACTION2",
+            "DESCRIPTION2",
+            "SEVERITY2"
+          ],
+          "row_filter": null,
+          "description": "알레르기 — 접근 불가 (업무 범위 밖)"
+        },
+        "immunizations": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "DATE",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "BASE_COST"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "예방접종 — 청구 심사·상태 갱신, 진단코드만 조회, 직접식별자 차단"
+        },
+        "careplans": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION"
+          ],
+          "denied_columns": [
+            "Id",
+            "START",
+            "STOP",
+            "REASONCODE",
+            "REASONDESCRIPTION"
+          ],
+          "row_filter": null,
+          "description": "케어플랜 — 청구 심사·상태 갱신, 진단코드만 조회, 직접식별자 차단"
+        },
+        "devices": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "START",
+            "STOP",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "UDI"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "의료기기 — 청구 심사·상태 갱신, 진단코드만 조회, 직접식별자 차단"
+        },
+        "supplies": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "DATE",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "QUANTITY"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "의료용품 — 청구 심사·상태 갱신, 진단코드만 조회, 직접식별자 차단"
+        },
+        "imaging_studies": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "PATIENT",
+            "ENCOUNTER",
+            "MODALITY_CODE",
+            "MODALITY_DESCRIPTION",
+            "PROCEDURE_CODE"
+          ],
+          "denied_columns": [
+            "Id",
+            "DATE",
+            "SERIES_UID",
+            "BODYSITE_CODE",
+            "BODYSITE_DESCRIPTION",
+            "INSTANCE_UID",
+            "SOP_CODE",
+            "SOP_DESCRIPTION"
+          ],
+          "row_filter": null,
+          "description": "영상검사 — 청구 심사·상태 갱신, 진단코드만 조회, 직접식별자 차단"
+        },
+        "encounters": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "Id",
+            "START",
+            "STOP",
+            "PATIENT",
+            "ORGANIZATION",
+            "PROVIDER",
+            "PAYER",
+            "ENCOUNTERCLASS",
+            "CODE",
+            "DESCRIPTION",
+            "BASE_ENCOUNTER_COST",
+            "TOTAL_CLAIM_COST",
+            "PAYER_COVERAGE",
+            "REASONCODE",
+            "REASONDESCRIPTION"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "내원 기록 — 청구 심사·상태 갱신, 진단코드만 조회, 직접식별자 차단"
+        },
+        "claims": {
+          "allowed_operations": [
+            "SELECT",
+            "UPDATE"
+          ],
+          "allowed_columns": [
+            "Id",
+            "PATIENTID",
+            "PROVIDERID",
+            "PRIMARYPATIENTINSURANCEID",
+            "SECONDARYPATIENTINSURANCEID",
+            "DEPARTMENTID",
+            "PATIENTDEPARTMENTID",
+            "DIAGNOSIS1",
+            "DIAGNOSIS2",
+            "DIAGNOSIS3",
+            "DIAGNOSIS4",
+            "DIAGNOSIS5",
+            "DIAGNOSIS6",
+            "DIAGNOSIS7",
+            "DIAGNOSIS8",
+            "REFERRINGPROVIDERID",
+            "APPOINTMENTID",
+            "CURRENTILLNESSDATE",
+            "SERVICEDATE",
+            "SUPERVISINGPROVIDERID",
+            "STATUS1",
+            "STATUS2",
+            "STATUSP",
+            "OUTSTANDING1",
+            "OUTSTANDING2",
+            "OUTSTANDINGP",
+            "LASTBILLEDDATE1",
+            "LASTBILLEDDATE2",
+            "LASTBILLEDDATEP",
+            "HEALTHCARECLAIMTYPEID1",
+            "HEALTHCARECLAIMTYPEID2"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "보험청구 — 청구 심사·상태 갱신, 진단코드만 조회, 직접식별자 차단"
+        },
+        "claims_transactions": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "ID",
+            "CLAIMID",
+            "CHARGEID",
+            "PATIENTID",
+            "TYPE",
+            "AMOUNT",
+            "METHOD",
+            "FROMDATE",
+            "TODATE",
+            "PLACEOFSERVICE",
+            "PROCEDURECODE",
+            "MODIFIER1",
+            "MODIFIER2",
+            "DIAGNOSISREF1",
+            "DIAGNOSISREF2",
+            "DIAGNOSISREF3",
+            "DIAGNOSISREF4",
+            "UNITS",
+            "DEPARTMENTID",
+            "NOTES",
+            "UNITAMOUNT",
+            "TRANSFEROUTID",
+            "TRANSFERTYPE",
+            "PAYMENTS",
+            "ADJUSTMENTS",
+            "TRANSFERS",
+            "OUTSTANDING",
+            "APPOINTMENTID",
+            "LINENOTE",
+            "PATIENTINSURANCEID",
+            "FEESCHEDULEID",
+            "PROVIDERID",
+            "SUPERVISINGPROVIDERID"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "청구 거래내역 — 청구 심사·상태 갱신, 진단코드만 조회, 직접식별자 차단"
+        },
+        "payer_transitions": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "PATIENT",
+            "MEMBERID",
+            "START_YEAR",
+            "END_YEAR",
+            "PAYER",
+            "SECONDARY_PAYER",
+            "OWNERSHIP",
+            "OWNERNAME"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "보험 가입이력 — 청구 심사·상태 갱신, 진단코드만 조회, 직접식별자 차단"
+        },
+        "providers": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "Id",
+            "ORGANIZATION",
+            "NAME",
+            "GENDER",
+            "SPECIALITY",
+            "ADDRESS",
+            "CITY",
+            "STATE",
+            "ZIP",
+            "LAT",
+            "LON",
+            "UTILIZATION"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "의료진 — 청구 심사·상태 갱신, 진단코드만 조회, 직접식별자 차단"
+        },
+        "organizations": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "Id",
+            "NAME",
+            "ADDRESS",
+            "CITY",
+            "STATE",
+            "ZIP",
+            "LAT",
+            "LON",
+            "PHONE",
+            "REVENUE",
+            "UTILIZATION"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "의료기관 — 청구 심사·상태 갱신, 진단코드만 조회, 직접식별자 차단"
+        },
+        "payers": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "Id",
+            "NAME",
+            "ADDRESS",
+            "CITY",
+            "STATE_HEADQUARTERED",
+            "ZIP",
+            "PHONE",
+            "AMOUNT_COVERED",
+            "AMOUNT_UNCOVERED",
+            "REVENUE",
+            "COVERED_ENCOUNTERS",
+            "UNCOVERED_ENCOUNTERS",
+            "COVERED_MEDICATIONS",
+            "UNCOVERED_MEDICATIONS",
+            "COVERED_PROCEDURES",
+            "UNCOVERED_PROCEDURES",
+            "COVERED_IMMUNIZATIONS",
+            "UNCOVERED_IMMUNIZATIONS",
+            "UNIQUE_CUSTOMERS",
+            "QOLS_AVG",
+            "MEMBER_MONTHS"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "보험사 — 청구 심사·상태 갱신, 진단코드만 조회, 직접식별자 차단"
+        }
+      }
+    },
+    "research_analyst": {
+      "role_name": "research_analyst",
+      "display_name": "임상연구 · 데이터 분석가 (Clinical Research Analyst)",
+      "description": "코호트·통계·품질지표 분석 담당. 비식별 데이터만 조회 가능(읽기 전용). 직접 식별자와 환자/내원 링크 키, 자유 텍스트, 정밀 위치는 차단. 날짜는 연 단위 일반화, 우편번호는 3자리로 절단된 비식별 뷰를 통해 접근하는 것을 전제로 한다.",
+      "level": 11,
+      "table_permissions": {
+        "patients": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "MARITAL",
+            "RACE",
+            "ETHNICITY",
+            "GENDER",
+            "STATE",
+            "COUNTY",
+            "HEALTHCARE_EXPENSES",
+            "HEALTHCARE_COVERAGE"
+          ],
+          "denied_columns": [
+            "Id",
+            "BIRTHDATE",
+            "DEATHDATE",
+            "SSN",
+            "DRIVERS",
+            "PASSPORT",
+            "PREFIX",
+            "FIRST",
+            "LAST",
+            "SUFFIX",
+            "MAIDEN",
+            "BIRTHPLACE",
+            "ADDRESS",
+            "CITY",
+            "ZIP",
+            "LAT",
+            "LON"
+          ],
+          "row_filter": null,
+          "description": "환자(개인식별정보 PII) — 비식별 집계 조회 전용, 식별자·링크키·자유텍스트 차단"
+        },
+        "conditions": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "START",
+            "STOP",
+            "CODE",
+            "DESCRIPTION"
+          ],
+          "denied_columns": [
+            "PATIENT",
+            "ENCOUNTER"
+          ],
+          "row_filter": null,
+          "description": "진단 — 비식별 집계 조회 전용, 식별자·링크키·자유텍스트 차단"
+        },
+        "medications": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "START",
+            "STOP",
+            "PAYER",
+            "CODE",
+            "DESCRIPTION",
+            "BASE_COST",
+            "PAYER_COVERAGE",
+            "DISPENSES",
+            "TOTALCOST",
+            "REASONCODE",
+            "REASONDESCRIPTION"
+          ],
+          "denied_columns": [
+            "PATIENT",
+            "ENCOUNTER"
+          ],
+          "row_filter": null,
+          "description": "투약/처방 — 비식별 집계 조회 전용, 식별자·링크키·자유텍스트 차단"
+        },
+        "procedures": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "START",
+            "STOP",
+            "CODE",
+            "DESCRIPTION",
+            "BASE_COST",
+            "REASONCODE",
+            "REASONDESCRIPTION"
+          ],
+          "denied_columns": [
+            "PATIENT",
+            "ENCOUNTER"
+          ],
+          "row_filter": null,
+          "description": "시술 — 비식별 집계 조회 전용, 식별자·링크키·자유텍스트 차단"
+        },
+        "observations": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "DATE",
+            "CATEGORY",
+            "CODE",
+            "DESCRIPTION",
+            "VALUE",
+            "UNITS",
+            "TYPE"
+          ],
+          "denied_columns": [
+            "PATIENT",
+            "ENCOUNTER"
+          ],
+          "row_filter": null,
+          "description": "관찰/검사결과 — 비식별 집계 조회 전용, 식별자·링크키·자유텍스트 차단"
+        },
+        "allergies": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "START",
+            "STOP",
+            "CODE",
+            "SYSTEM",
+            "DESCRIPTION",
+            "TYPE",
+            "CATEGORY",
+            "REACTION1",
+            "DESCRIPTION1",
+            "SEVERITY1",
+            "REACTION2",
+            "DESCRIPTION2",
+            "SEVERITY2"
+          ],
+          "denied_columns": [
+            "PATIENT",
+            "ENCOUNTER"
+          ],
+          "row_filter": null,
+          "description": "알레르기 — 비식별 집계 조회 전용, 식별자·링크키·자유텍스트 차단"
+        },
+        "immunizations": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "DATE",
+            "CODE",
+            "DESCRIPTION",
+            "BASE_COST"
+          ],
+          "denied_columns": [
+            "PATIENT",
+            "ENCOUNTER"
+          ],
+          "row_filter": null,
+          "description": "예방접종 — 비식별 집계 조회 전용, 식별자·링크키·자유텍스트 차단"
+        },
+        "careplans": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "Id",
+            "START",
+            "STOP",
+            "CODE",
+            "DESCRIPTION",
+            "REASONCODE",
+            "REASONDESCRIPTION"
+          ],
+          "denied_columns": [
+            "PATIENT",
+            "ENCOUNTER"
+          ],
+          "row_filter": null,
+          "description": "케어플랜 — 비식별 집계 조회 전용, 식별자·링크키·자유텍스트 차단"
+        },
+        "devices": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "START",
+            "STOP",
+            "CODE",
+            "DESCRIPTION"
+          ],
+          "denied_columns": [
+            "PATIENT",
+            "ENCOUNTER",
+            "UDI"
+          ],
+          "row_filter": null,
+          "description": "의료기기 — 비식별 집계 조회 전용, 식별자·링크키·자유텍스트 차단"
+        },
+        "supplies": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "DATE",
+            "CODE",
+            "DESCRIPTION",
+            "QUANTITY"
+          ],
+          "denied_columns": [
+            "PATIENT",
+            "ENCOUNTER"
+          ],
+          "row_filter": null,
+          "description": "의료용품 — 비식별 집계 조회 전용, 식별자·링크키·자유텍스트 차단"
+        },
+        "imaging_studies": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "Id",
+            "DATE",
+            "BODYSITE_CODE",
+            "BODYSITE_DESCRIPTION",
+            "MODALITY_CODE",
+            "MODALITY_DESCRIPTION",
+            "SOP_CODE",
+            "SOP_DESCRIPTION",
+            "PROCEDURE_CODE"
+          ],
+          "denied_columns": [
+            "PATIENT",
+            "ENCOUNTER",
+            "SERIES_UID",
+            "INSTANCE_UID"
+          ],
+          "row_filter": null,
+          "description": "영상검사 — 비식별 집계 조회 전용, 식별자·링크키·자유텍스트 차단"
+        },
+        "encounters": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "Id",
+            "START",
+            "STOP",
+            "ORGANIZATION",
+            "PAYER",
+            "ENCOUNTERCLASS",
+            "CODE",
+            "DESCRIPTION",
+            "BASE_ENCOUNTER_COST",
+            "TOTAL_CLAIM_COST",
+            "PAYER_COVERAGE",
+            "REASONCODE",
+            "REASONDESCRIPTION"
+          ],
+          "denied_columns": [
+            "PATIENT",
+            "PROVIDER"
+          ],
+          "row_filter": null,
+          "description": "내원 기록 — 비식별 집계 조회 전용, 식별자·링크키·자유텍스트 차단"
+        },
+        "claims": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "DEPARTMENTID",
+            "DIAGNOSIS1",
+            "SERVICEDATE",
+            "STATUS1",
+            "HEALTHCARECLAIMTYPEID1"
+          ],
+          "denied_columns": [
+            "Id",
+            "PATIENTID",
+            "PROVIDERID",
+            "PRIMARYPATIENTINSURANCEID",
+            "SECONDARYPATIENTINSURANCEID",
+            "PATIENTDEPARTMENTID",
+            "DIAGNOSIS2",
+            "DIAGNOSIS3",
+            "DIAGNOSIS4",
+            "DIAGNOSIS5",
+            "DIAGNOSIS6",
+            "DIAGNOSIS7",
+            "DIAGNOSIS8",
+            "REFERRINGPROVIDERID",
+            "APPOINTMENTID",
+            "CURRENTILLNESSDATE",
+            "SUPERVISINGPROVIDERID",
+            "STATUS2",
+            "STATUSP",
+            "OUTSTANDING1",
+            "OUTSTANDING2",
+            "OUTSTANDINGP",
+            "LASTBILLEDDATE1",
+            "LASTBILLEDDATE2",
+            "LASTBILLEDDATEP",
+            "HEALTHCARECLAIMTYPEID2"
+          ],
+          "row_filter": null,
+          "description": "보험청구 — 비식별 집계 조회 전용, 식별자·링크키·자유텍스트 차단"
+        },
+        "claims_transactions": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "TYPE",
+            "AMOUNT",
+            "PROCEDURECODE",
+            "UNITS",
+            "PAYMENTS",
+            "ADJUSTMENTS",
+            "OUTSTANDING"
+          ],
+          "denied_columns": [
+            "ID",
+            "CLAIMID",
+            "CHARGEID",
+            "PATIENTID",
+            "METHOD",
+            "FROMDATE",
+            "TODATE",
+            "PLACEOFSERVICE",
+            "MODIFIER1",
+            "MODIFIER2",
+            "DIAGNOSISREF1",
+            "DIAGNOSISREF2",
+            "DIAGNOSISREF3",
+            "DIAGNOSISREF4",
+            "DEPARTMENTID",
+            "NOTES",
+            "UNITAMOUNT",
+            "TRANSFEROUTID",
+            "TRANSFERTYPE",
+            "TRANSFERS",
+            "APPOINTMENTID",
+            "LINENOTE",
+            "PATIENTINSURANCEID",
+            "FEESCHEDULEID",
+            "PROVIDERID",
+            "SUPERVISINGPROVIDERID"
+          ],
+          "row_filter": null,
+          "description": "청구 거래내역 — 비식별 집계 조회 전용, 식별자·링크키·자유텍스트 차단"
+        },
+        "payer_transitions": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "START_YEAR",
+            "END_YEAR",
+            "PAYER",
+            "OWNERSHIP"
+          ],
+          "denied_columns": [
+            "PATIENT",
+            "MEMBERID",
+            "SECONDARY_PAYER",
+            "OWNERNAME"
+          ],
+          "row_filter": null,
+          "description": "보험 가입이력 — 비식별 집계 조회 전용, 식별자·링크키·자유텍스트 차단"
+        },
+        "providers": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "Id",
+            "ORGANIZATION",
+            "GENDER",
+            "SPECIALITY",
+            "CITY",
+            "STATE",
+            "ZIP",
+            "UTILIZATION"
+          ],
+          "denied_columns": [
+            "NAME",
+            "ADDRESS",
+            "LAT",
+            "LON"
+          ],
+          "row_filter": null,
+          "description": "의료진 — 비식별 집계 조회 전용, 식별자·링크키·자유텍스트 차단"
+        },
+        "organizations": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "Id",
+            "NAME",
+            "ADDRESS",
+            "CITY",
+            "STATE",
+            "ZIP",
+            "LAT",
+            "LON",
+            "PHONE",
+            "REVENUE",
+            "UTILIZATION"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "의료기관 — 비식별 집계 조회 전용, 식별자·링크키·자유텍스트 차단"
+        },
+        "payers": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "Id",
+            "NAME",
+            "ADDRESS",
+            "CITY",
+            "STATE_HEADQUARTERED",
+            "ZIP",
+            "PHONE",
+            "AMOUNT_COVERED",
+            "AMOUNT_UNCOVERED",
+            "REVENUE",
+            "COVERED_ENCOUNTERS",
+            "UNCOVERED_ENCOUNTERS",
+            "COVERED_MEDICATIONS",
+            "UNCOVERED_MEDICATIONS",
+            "COVERED_PROCEDURES",
+            "UNCOVERED_PROCEDURES",
+            "COVERED_IMMUNIZATIONS",
+            "UNCOVERED_IMMUNIZATIONS",
+            "UNIQUE_CUSTOMERS",
+            "QOLS_AVG",
+            "MEMBER_MONTHS"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "보험사 — 비식별 집계 조회 전용, 식별자·링크키·자유텍스트 차단"
+        }
+      }
+    },
+    "external_auditor": {
+      "role_name": "external_auditor",
+      "display_name": "외부 회계 감사인 (External Auditor)",
+      "description": "청구·수납·매출의 회계 정합성을 감사하는 외부 감사인. 재무·청구 테이블과 기관·보험사 마스터를 전체 조회. 임상 기록은 비용 근거 확인 범위로 조회. 환자 PII는 익명 Id와 지역 정보 외에는 차단되며 모든 변경은 불가.",
+      "level": 12,
+      "table_permissions": {
+        "patients": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "Id",
+            "STATE",
+            "COUNTY",
+            "HEALTHCARE_EXPENSES",
+            "HEALTHCARE_COVERAGE"
+          ],
+          "denied_columns": [
+            "BIRTHDATE",
+            "DEATHDATE",
+            "SSN",
+            "DRIVERS",
+            "PASSPORT",
+            "PREFIX",
+            "FIRST",
+            "LAST",
+            "SUFFIX",
+            "MAIDEN",
+            "MARITAL",
+            "RACE",
+            "ETHNICITY",
+            "GENDER",
+            "BIRTHPLACE",
+            "ADDRESS",
+            "CITY",
+            "ZIP",
+            "LAT",
+            "LON"
+          ],
+          "row_filter": null,
+          "description": "환자(개인식별정보 PII) — 재무·청구 전체 조회, 임상은 비용근거만, PII 차단"
+        },
+        "conditions": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE"
+          ],
+          "denied_columns": [
+            "START",
+            "STOP",
+            "DESCRIPTION"
+          ],
+          "row_filter": null,
+          "description": "진단 — 재무·청구 전체 조회, 임상은 비용근거만, PII 차단"
+        },
+        "medications": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "BASE_COST",
+            "PAYER_COVERAGE",
+            "DISPENSES",
+            "TOTALCOST"
+          ],
+          "denied_columns": [
+            "START",
+            "STOP",
+            "PAYER",
+            "DESCRIPTION",
+            "REASONCODE",
+            "REASONDESCRIPTION"
+          ],
+          "row_filter": null,
+          "description": "투약/처방 — 재무·청구 전체 조회, 임상은 비용근거만, PII 차단"
+        },
+        "procedures": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "BASE_COST"
+          ],
+          "denied_columns": [
+            "START",
+            "STOP",
+            "DESCRIPTION",
+            "REASONCODE",
+            "REASONDESCRIPTION"
+          ],
+          "row_filter": null,
+          "description": "시술 — 재무·청구 전체 조회, 임상은 비용근거만, PII 차단"
+        },
+        "observations": {
+          "allowed_operations": [],
+          "allowed_columns": [],
+          "denied_columns": [
+            "DATE",
+            "PATIENT",
+            "ENCOUNTER",
+            "CATEGORY",
+            "CODE",
+            "DESCRIPTION",
+            "VALUE",
+            "UNITS",
+            "TYPE"
+          ],
+          "row_filter": null,
+          "description": "관찰/검사결과 — 접근 불가 (업무 범위 밖)"
+        },
+        "allergies": {
+          "allowed_operations": [],
+          "allowed_columns": [],
+          "denied_columns": [
+            "START",
+            "STOP",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "SYSTEM",
+            "DESCRIPTION",
+            "TYPE",
+            "CATEGORY",
+            "REACTION1",
+            "DESCRIPTION1",
+            "SEVERITY1",
+            "REACTION2",
+            "DESCRIPTION2",
+            "SEVERITY2"
+          ],
+          "row_filter": null,
+          "description": "알레르기 — 접근 불가 (업무 범위 밖)"
+        },
+        "immunizations": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "DATE",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "BASE_COST"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "예방접종 — 재무·청구 전체 조회, 임상은 비용근거만, PII 차단"
+        },
+        "careplans": {
+          "allowed_operations": [],
+          "allowed_columns": [],
+          "denied_columns": [
+            "Id",
+            "START",
+            "STOP",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "REASONCODE",
+            "REASONDESCRIPTION"
+          ],
+          "row_filter": null,
+          "description": "케어플랜 — 접근 불가 (업무 범위 밖)"
+        },
+        "devices": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "UDI"
+          ],
+          "denied_columns": [
+            "START",
+            "STOP",
+            "DESCRIPTION"
+          ],
+          "row_filter": null,
+          "description": "의료기기 — 재무·청구 전체 조회, 임상은 비용근거만, PII 차단"
+        },
+        "supplies": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "DATE",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "QUANTITY"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "의료용품 — 재무·청구 전체 조회, 임상은 비용근거만, PII 차단"
+        },
+        "imaging_studies": {
+          "allowed_operations": [],
+          "allowed_columns": [],
+          "denied_columns": [
+            "Id",
+            "DATE",
+            "PATIENT",
+            "ENCOUNTER",
+            "SERIES_UID",
+            "BODYSITE_CODE",
+            "BODYSITE_DESCRIPTION",
+            "MODALITY_CODE",
+            "MODALITY_DESCRIPTION",
+            "INSTANCE_UID",
+            "SOP_CODE",
+            "SOP_DESCRIPTION",
+            "PROCEDURE_CODE"
+          ],
+          "row_filter": null,
+          "description": "영상검사 — 접근 불가 (업무 범위 밖)"
+        },
+        "encounters": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "Id",
+            "START",
+            "STOP",
+            "PATIENT",
+            "ORGANIZATION",
+            "PROVIDER",
+            "PAYER",
+            "ENCOUNTERCLASS",
+            "CODE",
+            "BASE_ENCOUNTER_COST",
+            "TOTAL_CLAIM_COST",
+            "PAYER_COVERAGE"
+          ],
+          "denied_columns": [
+            "DESCRIPTION",
+            "REASONCODE",
+            "REASONDESCRIPTION"
+          ],
+          "row_filter": null,
+          "description": "내원 기록 — 재무·청구 전체 조회, 임상은 비용근거만, PII 차단"
+        },
+        "claims": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "Id",
+            "PATIENTID",
+            "PROVIDERID",
+            "PRIMARYPATIENTINSURANCEID",
+            "SECONDARYPATIENTINSURANCEID",
+            "DEPARTMENTID",
+            "PATIENTDEPARTMENTID",
+            "DIAGNOSIS1",
+            "DIAGNOSIS2",
+            "DIAGNOSIS3",
+            "DIAGNOSIS4",
+            "DIAGNOSIS5",
+            "DIAGNOSIS6",
+            "DIAGNOSIS7",
+            "DIAGNOSIS8",
+            "REFERRINGPROVIDERID",
+            "APPOINTMENTID",
+            "CURRENTILLNESSDATE",
+            "SERVICEDATE",
+            "SUPERVISINGPROVIDERID",
+            "STATUS1",
+            "STATUS2",
+            "STATUSP",
+            "OUTSTANDING1",
+            "OUTSTANDING2",
+            "OUTSTANDINGP",
+            "LASTBILLEDDATE1",
+            "LASTBILLEDDATE2",
+            "LASTBILLEDDATEP",
+            "HEALTHCARECLAIMTYPEID1",
+            "HEALTHCARECLAIMTYPEID2"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "보험청구 — 재무·청구 전체 조회, 임상은 비용근거만, PII 차단"
+        },
+        "claims_transactions": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "ID",
+            "CLAIMID",
+            "CHARGEID",
+            "PATIENTID",
+            "TYPE",
+            "AMOUNT",
+            "METHOD",
+            "FROMDATE",
+            "TODATE",
+            "PLACEOFSERVICE",
+            "PROCEDURECODE",
+            "MODIFIER1",
+            "MODIFIER2",
+            "DIAGNOSISREF1",
+            "DIAGNOSISREF2",
+            "DIAGNOSISREF3",
+            "DIAGNOSISREF4",
+            "UNITS",
+            "DEPARTMENTID",
+            "NOTES",
+            "UNITAMOUNT",
+            "TRANSFEROUTID",
+            "TRANSFERTYPE",
+            "PAYMENTS",
+            "ADJUSTMENTS",
+            "TRANSFERS",
+            "OUTSTANDING",
+            "APPOINTMENTID",
+            "LINENOTE",
+            "PATIENTINSURANCEID",
+            "FEESCHEDULEID",
+            "PROVIDERID",
+            "SUPERVISINGPROVIDERID"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "청구 거래내역 — 재무·청구 전체 조회, 임상은 비용근거만, PII 차단"
+        },
+        "payer_transitions": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "PATIENT",
+            "MEMBERID",
+            "START_YEAR",
+            "END_YEAR",
+            "PAYER",
+            "SECONDARY_PAYER",
+            "OWNERSHIP",
+            "OWNERNAME"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "보험 가입이력 — 재무·청구 전체 조회, 임상은 비용근거만, PII 차단"
+        },
+        "providers": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "Id",
+            "ORGANIZATION",
+            "NAME",
+            "GENDER",
+            "SPECIALITY",
+            "ADDRESS",
+            "CITY",
+            "STATE",
+            "ZIP",
+            "LAT",
+            "LON",
+            "UTILIZATION"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "의료진 — 재무·청구 전체 조회, 임상은 비용근거만, PII 차단"
+        },
+        "organizations": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "Id",
+            "NAME",
+            "ADDRESS",
+            "CITY",
+            "STATE",
+            "ZIP",
+            "LAT",
+            "LON",
+            "PHONE",
+            "REVENUE",
+            "UTILIZATION"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "의료기관 — 재무·청구 전체 조회, 임상은 비용근거만, PII 차단"
+        },
+        "payers": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "Id",
+            "NAME",
+            "ADDRESS",
+            "CITY",
+            "STATE_HEADQUARTERED",
+            "ZIP",
+            "PHONE",
+            "AMOUNT_COVERED",
+            "AMOUNT_UNCOVERED",
+            "REVENUE",
+            "COVERED_ENCOUNTERS",
+            "UNCOVERED_ENCOUNTERS",
+            "COVERED_MEDICATIONS",
+            "UNCOVERED_MEDICATIONS",
+            "COVERED_PROCEDURES",
+            "UNCOVERED_PROCEDURES",
+            "COVERED_IMMUNIZATIONS",
+            "UNCOVERED_IMMUNIZATIONS",
+            "UNIQUE_CUSTOMERS",
+            "QOLS_AVG",
+            "MEMBER_MONTHS"
+          ],
+          "denied_columns": [],
+          "row_filter": null,
+          "description": "보험사 — 재무·청구 전체 조회, 임상은 비용근거만, PII 차단"
+        }
+      }
+    },
+    "patient": {
+      "role_name": "patient",
+      "display_name": "환자 본인 (Patient / Self-Service)",
+      "description": "환자 포털(PHR)을 통해 본인 데이터만 조회하는 일반 환자. 모든 테이블에 행 수준 필터가 적용되어 본인 PATIENT/PATIENTID 행만 접근 가능. 타 환자 데이터와 의료진·기관·보험사 내부 마스터에는 접근 불가하며, 모든 변경은 불가. 법정 식별번호와 내부 좌표는 마스킹.",
+      "level": 13,
+      "table_permissions": {
+        "patients": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "Id",
+            "BIRTHDATE",
+            "DEATHDATE",
+            "PREFIX",
+            "FIRST",
+            "LAST",
+            "SUFFIX",
+            "MAIDEN",
+            "MARITAL",
+            "RACE",
+            "ETHNICITY",
+            "GENDER",
+            "BIRTHPLACE",
+            "ADDRESS",
+            "CITY",
+            "STATE",
+            "COUNTY",
+            "ZIP",
+            "HEALTHCARE_EXPENSES",
+            "HEALTHCARE_COVERAGE"
+          ],
+          "denied_columns": [
+            "SSN",
+            "DRIVERS",
+            "PASSPORT",
+            "LAT",
+            "LON"
+          ],
+          "row_filter": "Id = '{current_user_patient_id}'",
+          "description": "환자(개인식별정보 PII) — 본인 데이터만 조회 (행수준 필터), 마스터 접근 불가"
+        },
+        "conditions": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "START",
+            "STOP",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION"
+          ],
+          "denied_columns": [],
+          "row_filter": "PATIENT = '{current_user_patient_id}'",
+          "description": "진단 — 본인 데이터만 조회 (행수준 필터), 마스터 접근 불가"
+        },
+        "medications": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "START",
+            "STOP",
+            "PATIENT",
+            "PAYER",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "BASE_COST",
+            "PAYER_COVERAGE",
+            "DISPENSES",
+            "TOTALCOST",
+            "REASONCODE",
+            "REASONDESCRIPTION"
+          ],
+          "denied_columns": [],
+          "row_filter": "PATIENT = '{current_user_patient_id}'",
+          "description": "투약/처방 — 본인 데이터만 조회 (행수준 필터), 마스터 접근 불가"
+        },
+        "procedures": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "START",
+            "STOP",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "BASE_COST",
+            "REASONCODE",
+            "REASONDESCRIPTION"
+          ],
+          "denied_columns": [],
+          "row_filter": "PATIENT = '{current_user_patient_id}'",
+          "description": "시술 — 본인 데이터만 조회 (행수준 필터), 마스터 접근 불가"
+        },
+        "observations": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "DATE",
+            "PATIENT",
+            "ENCOUNTER",
+            "CATEGORY",
+            "CODE",
+            "DESCRIPTION",
+            "VALUE",
+            "UNITS",
+            "TYPE"
+          ],
+          "denied_columns": [],
+          "row_filter": "PATIENT = '{current_user_patient_id}'",
+          "description": "관찰/검사결과 — 본인 데이터만 조회 (행수준 필터), 마스터 접근 불가"
+        },
+        "allergies": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "START",
+            "STOP",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "SYSTEM",
+            "DESCRIPTION",
+            "TYPE",
+            "CATEGORY",
+            "REACTION1",
+            "DESCRIPTION1",
+            "SEVERITY1",
+            "REACTION2",
+            "DESCRIPTION2",
+            "SEVERITY2"
+          ],
+          "denied_columns": [],
+          "row_filter": "PATIENT = '{current_user_patient_id}'",
+          "description": "알레르기 — 본인 데이터만 조회 (행수준 필터), 마스터 접근 불가"
+        },
+        "immunizations": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "DATE",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "BASE_COST"
+          ],
+          "denied_columns": [],
+          "row_filter": "PATIENT = '{current_user_patient_id}'",
+          "description": "예방접종 — 본인 데이터만 조회 (행수준 필터), 마스터 접근 불가"
+        },
+        "careplans": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "Id",
+            "START",
+            "STOP",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "REASONCODE",
+            "REASONDESCRIPTION"
+          ],
+          "denied_columns": [],
+          "row_filter": "PATIENT = '{current_user_patient_id}'",
+          "description": "케어플랜 — 본인 데이터만 조회 (행수준 필터), 마스터 접근 불가"
+        },
+        "devices": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "START",
+            "STOP",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "UDI"
+          ],
+          "denied_columns": [],
+          "row_filter": "PATIENT = '{current_user_patient_id}'",
+          "description": "의료기기 — 본인 데이터만 조회 (행수준 필터), 마스터 접근 불가"
+        },
+        "supplies": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "DATE",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "QUANTITY"
+          ],
+          "denied_columns": [],
+          "row_filter": "PATIENT = '{current_user_patient_id}'",
+          "description": "의료용품 — 본인 데이터만 조회 (행수준 필터), 마스터 접근 불가"
+        },
+        "imaging_studies": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "Id",
+            "DATE",
+            "PATIENT",
+            "ENCOUNTER",
+            "SERIES_UID",
+            "BODYSITE_CODE",
+            "BODYSITE_DESCRIPTION",
+            "MODALITY_CODE",
+            "MODALITY_DESCRIPTION",
+            "INSTANCE_UID",
+            "SOP_CODE",
+            "SOP_DESCRIPTION",
+            "PROCEDURE_CODE"
+          ],
+          "denied_columns": [],
+          "row_filter": "PATIENT = '{current_user_patient_id}'",
+          "description": "영상검사 — 본인 데이터만 조회 (행수준 필터), 마스터 접근 불가"
+        },
+        "encounters": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "Id",
+            "START",
+            "STOP",
+            "PATIENT",
+            "ORGANIZATION",
+            "PROVIDER",
+            "PAYER",
+            "ENCOUNTERCLASS",
+            "CODE",
+            "DESCRIPTION",
+            "BASE_ENCOUNTER_COST",
+            "TOTAL_CLAIM_COST",
+            "PAYER_COVERAGE",
+            "REASONCODE",
+            "REASONDESCRIPTION"
+          ],
+          "denied_columns": [],
+          "row_filter": "PATIENT = '{current_user_patient_id}'",
+          "description": "내원 기록 — 본인 데이터만 조회 (행수준 필터), 마스터 접근 불가"
+        },
+        "claims": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "Id",
+            "PATIENTID",
+            "PROVIDERID",
+            "PRIMARYPATIENTINSURANCEID",
+            "SECONDARYPATIENTINSURANCEID",
+            "DEPARTMENTID",
+            "PATIENTDEPARTMENTID",
+            "DIAGNOSIS1",
+            "DIAGNOSIS2",
+            "DIAGNOSIS3",
+            "DIAGNOSIS4",
+            "DIAGNOSIS5",
+            "DIAGNOSIS6",
+            "DIAGNOSIS7",
+            "DIAGNOSIS8",
+            "APPOINTMENTID",
+            "CURRENTILLNESSDATE",
+            "SERVICEDATE",
+            "STATUS1",
+            "STATUS2",
+            "STATUSP",
+            "OUTSTANDING1",
+            "OUTSTANDING2",
+            "OUTSTANDINGP",
+            "LASTBILLEDDATE1",
+            "LASTBILLEDDATE2",
+            "LASTBILLEDDATEP",
+            "HEALTHCARECLAIMTYPEID1",
+            "HEALTHCARECLAIMTYPEID2"
+          ],
+          "denied_columns": [
+            "REFERRINGPROVIDERID",
+            "SUPERVISINGPROVIDERID"
+          ],
+          "row_filter": "PATIENTID = '{current_user_patient_id}'",
+          "description": "보험청구 — 본인 데이터만 조회 (행수준 필터), 마스터 접근 불가"
+        },
+        "claims_transactions": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "ID",
+            "CLAIMID",
+            "CHARGEID",
+            "PATIENTID",
+            "TYPE",
+            "AMOUNT",
+            "METHOD",
+            "FROMDATE",
+            "TODATE",
+            "PLACEOFSERVICE",
+            "PROCEDURECODE",
+            "MODIFIER1",
+            "MODIFIER2",
+            "DIAGNOSISREF1",
+            "DIAGNOSISREF2",
+            "DIAGNOSISREF3",
+            "DIAGNOSISREF4",
+            "UNITS",
+            "DEPARTMENTID",
+            "UNITAMOUNT",
+            "TRANSFERTYPE",
+            "PAYMENTS",
+            "ADJUSTMENTS",
+            "TRANSFERS",
+            "OUTSTANDING",
+            "APPOINTMENTID",
+            "PATIENTINSURANCEID",
+            "PROVIDERID",
+            "SUPERVISINGPROVIDERID"
+          ],
+          "denied_columns": [
+            "NOTES",
+            "TRANSFEROUTID",
+            "LINENOTE",
+            "FEESCHEDULEID"
+          ],
+          "row_filter": "PATIENTID = '{current_user_patient_id}'",
+          "description": "청구 거래내역 — 본인 데이터만 조회 (행수준 필터), 마스터 접근 불가"
+        },
+        "payer_transitions": {
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "PATIENT",
+            "MEMBERID",
+            "START_YEAR",
+            "END_YEAR",
+            "PAYER",
+            "SECONDARY_PAYER",
+            "OWNERSHIP",
+            "OWNERNAME"
+          ],
+          "denied_columns": [],
+          "row_filter": "PATIENT = '{current_user_patient_id}'",
+          "description": "보험 가입이력 — 본인 데이터만 조회 (행수준 필터), 마스터 접근 불가"
+        },
+        "providers": {
+          "allowed_operations": [],
+          "allowed_columns": [],
+          "denied_columns": [
+            "Id",
+            "ORGANIZATION",
+            "NAME",
+            "GENDER",
+            "SPECIALITY",
+            "ADDRESS",
+            "CITY",
+            "STATE",
+            "ZIP",
+            "LAT",
+            "LON",
+            "UTILIZATION"
+          ],
+          "row_filter": null,
+          "description": "의료진 — 접근 불가 (업무 범위 밖)"
+        },
+        "organizations": {
+          "allowed_operations": [],
+          "allowed_columns": [],
+          "denied_columns": [
+            "Id",
+            "NAME",
+            "ADDRESS",
+            "CITY",
+            "STATE",
+            "ZIP",
+            "LAT",
+            "LON",
+            "PHONE",
+            "REVENUE",
+            "UTILIZATION"
+          ],
+          "row_filter": null,
+          "description": "의료기관 — 접근 불가 (업무 범위 밖)"
+        },
+        "payers": {
+          "allowed_operations": [],
+          "allowed_columns": [],
+          "denied_columns": [
+            "Id",
+            "NAME",
+            "ADDRESS",
+            "CITY",
+            "STATE_HEADQUARTERED",
+            "ZIP",
+            "PHONE",
+            "AMOUNT_COVERED",
+            "AMOUNT_UNCOVERED",
+            "REVENUE",
+            "COVERED_ENCOUNTERS",
+            "UNCOVERED_ENCOUNTERS",
+            "COVERED_MEDICATIONS",
+            "UNCOVERED_MEDICATIONS",
+            "COVERED_PROCEDURES",
+            "UNCOVERED_PROCEDURES",
+            "COVERED_IMMUNIZATIONS",
+            "UNCOVERED_IMMUNIZATIONS",
+            "UNIQUE_CUSTOMERS",
+            "QOLS_AVG",
+            "MEMBER_MONTHS"
+          ],
+          "row_filter": null,
+          "description": "보험사 — 접근 불가 (업무 범위 밖)"
+        }
+      }
+    }
+  }
+}
