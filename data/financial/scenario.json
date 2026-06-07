@@ -456,10 +456,10 @@
         "role": "customer_service",
         "scenario_ko": "고객이 현재 계좌 잔액을 문의하고 있어. 계좌 12345의 최신 잔액을 확인해줘.",
         "scenario_en": "The customer is asking about their current account balance. Check the latest balance for account 12345.",
-        "expected_result": "DENY",
-        "category": "denied_column",
-        "reason_ko": "customer_service는 trans 테이블에서 balance 컬럼에 대한 접근 권한 없음.",
-        "reason_en": "Customer service does not have access to the balance column in the trans table."
+        "expected_result": "ALLOW",
+        "category": "allowed_select",
+        "reason_ko": "customer_service는 trans 테이블에서 balance 컬럼에 대한 SELECT 권한을 보유. 잔액 문의는 기본 상담 업무.",
+        "reason_en": "Customer service has SELECT access to the balance column in the trans table. Balance inquiry is a basic customer service task."
       },
       {
         "scenario_id": "customer_service_007",

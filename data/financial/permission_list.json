@@ -407,10 +407,10 @@
         },
         "trans": {
           "allowed_operations": ["SELECT"],
-          "allowed_columns": ["trans_id", "account_id", "date", "type", "amount"],
-          "denied_columns": ["operation", "balance", "k_symbol", "bank", "account"],
+          "allowed_columns": ["trans_id", "account_id", "date", "type", "amount", "balance"],
+          "denied_columns": ["operation", "k_symbol", "bank", "account"],
           "row_filter": null,
-          "description": "최근 거래 일자·유형·금액만 조회 가능 (거래 분쟁 기본 확인용). 잔액·거래 상대방 정보는 접근 불가."
+          "description": "거래 일자·유형·금액·잔액 조회 가능 (잔액 문의·거래 분쟁 기본 확인용). 거래 수단 상세, 거래 분류, 거래 상대방 정보는 접근 불가."
         }
       }
     },
