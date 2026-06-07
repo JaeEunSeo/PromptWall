@@ -580,15 +580,15 @@
           "allowed_operations": ["SELECT"],
           "allowed_columns": ["card_id", "type", "issued"],
           "denied_columns": ["disp_id"],
-          "row_filter": "disp_id IN (SELECT disp_id FROM disp WHERE client_id = {current_user_client_id})",
-          "description": "본인 카드 정보(유형, 발급일)만 조회. 내부 disposition ID는 접근 불가."
+          "row_filter": "disp_id IN (SELECT disp_id FROM disp WHERE client_id = {current_user_client_id} AND type = 'OWNER')",
+          "description": "본인이 OWNER로 연결된 계좌의 카드 정보(유형, 발급일)만 조회 가능. DISPONENT로 연결된 계좌의 카드는 신원·신용 기반 정보이므로 row_filter에 의해 제외됨. 내부 disposition ID는 접근 불가."
         },
         "loan": {
           "allowed_operations": ["SELECT"],
           "allowed_columns": ["loan_id", "date", "amount", "duration", "payments", "status"],
           "denied_columns": ["account_id"],
-          "row_filter": "account_id IN (SELECT account_id FROM disp WHERE client_id = {current_user_client_id})",
-          "description": "본인 계좌에 연결된 대출 정보만 조회. 내부 계좌 ID는 접근 불가."
+          "row_filter": "account_id IN (SELECT account_id FROM disp WHERE client_id = {current_user_client_id} AND type = 'OWNER')",
+          "description": "본인이 OWNER로 연결된 계좌의 대출 정보만 조회 가능. DISPONENT로 연결된 계좌의 대출은 명의자 본인의 신용평가에 묶여 있으므로 row_filter에 의해 제외됨. 내부 계좌 ID는 접근 불가."
         },
         "order": {
           "allowed_operations": ["SELECT"],
