@@ -2,7 +2,8 @@
   "metadata": {
     "project": "LLM SQL Agent with Role-Based Access Control",
     "database": "financial",
-    "description": "Czech bank financial database에 대한 역할 기반 접근 제어(RBAC) 권한 정의. 각 역할은 테이블별·컬럼별 접근 권한과 행 수준 필터를 가짐.",
+    "description_ko": "Czech bank financial database에 대한 역할 기반 접근 제어(RBAC) 권한 정의. 각 역할은 테이블별·컬럼별 접근 권한과 행 수준 필터를 가짐.",
+    "description_en": "Role-based access control (RBAC) permission definitions for the Czech bank financial database. Each role has table-level and column-level access controls with row-level filters.",
     "tables": [
       "district",
       "client",
@@ -13,596 +14,1493 @@
       "order",
       "trans"
     ],
-    "supported_operations": ["SELECT", "INSERT", "UPDATE", "DELETE"]
+    "supported_operations": [
+      "SELECT",
+      "INSERT",
+      "UPDATE",
+      "DELETE"
+    ]
   },
   "role_hierarchy": {
-    "description": "은행 조직 구조에 기반한 역할 계층. level 숫자가 낮을수록 높은 권한. 각 역할은 독립적으로 정의되며 상위 역할의 권한을 자동 상속하지 않음.",
+    "description_ko": "은행 조직 구조에 기반한 역할 계층. level 숫자가 낮을수록 높은 권한. 각 역할은 독립적으로 정의되며 상위 역할의 권한을 자동 상속하지 않음.",
+    "description_en": "Role hierarchy based on the bank's organizational structure. Lower level numbers indicate higher privileges. Each role is independently defined and does not automatically inherit permissions from higher-level roles.",
     "levels": [
-      { "level": 1, "role": "admin", "display_name": "시스템 관리자" },
-      { "level": 2, "role": "compliance_officer", "display_name": "준법감시인" },
-      { "level": 3, "role": "branch_manager", "display_name": "지점장" },
-      { "level": 4, "role": "loan_officer", "display_name": "여신심사역" },
-      { "level": 5, "role": "teller", "display_name": "은행 창구직원" },
-      { "level": 6, "role": "customer_service", "display_name": "고객상담원" },
-      { "level": 7, "role": "data_analyst", "display_name": "데이터 분석가" },
-      { "level": 8, "role": "auditor", "display_name": "외부 감사인" },
-      { "level": 9, "role": "customer", "display_name": "은행 고객" }
+      {
+        "level": 1,
+        "role": "admin",
+        "display_name": "시스템 관리자"
+      },
+      {
+        "level": 2,
+        "role": "compliance_officer",
+        "display_name": "준법감시인"
+      },
+      {
+        "level": 3,
+        "role": "branch_manager",
+        "display_name": "지점장"
+      },
+      {
+        "level": 4,
+        "role": "loan_officer",
+        "display_name": "여신심사역"
+      },
+      {
+        "level": 5,
+        "role": "teller",
+        "display_name": "은행 창구직원"
+      },
+      {
+        "level": 6,
+        "role": "customer_service",
+        "display_name": "고객상담원"
+      },
+      {
+        "level": 7,
+        "role": "data_analyst",
+        "display_name": "데이터 분석가"
+      },
+      {
+        "level": 8,
+        "role": "auditor",
+        "display_name": "외부 감사인"
+      },
+      {
+        "level": 9,
+        "role": "customer",
+        "display_name": "은행 고객"
+      }
     ]
   },
   "roles": {
     "admin": {
       "role_name": "admin",
       "display_name": "시스템 관리자 (Database Administrator)",
-      "description": "데이터베이스 전체에 대한 완전한 접근 권한을 가진 시스템 관리자. 스키마 관리, 데이터 정합성 유지, 백업·복구 등 모든 DB 작업 수행 가능.",
+      "description_ko": "데이터베이스 전체에 대한 완전한 접근 권한을 가진 시스템 관리자. 스키마 관리, 데이터 정합성 유지, 백업·복구 등 모든 DB 작업 수행 가능.",
+      "description_en": "System administrator with full access to the entire database. Capable of all DB operations including schema management, data integrity maintenance, and backup/recovery.",
       "level": 1,
       "table_permissions": {
         "district": {
-          "allowed_operations": ["SELECT", "INSERT", "UPDATE", "DELETE"],
-          "allowed_columns": ["district_id", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9", "A10", "A11", "A12", "A13", "A14", "A15", "A16"],
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE",
+            "DELETE"
+          ],
+          "allowed_columns": [
+            "district_id",
+            "A2",
+            "A3",
+            "A4",
+            "A5",
+            "A6",
+            "A7",
+            "A8",
+            "A9",
+            "A10",
+            "A11",
+            "A12",
+            "A13",
+            "A14",
+            "A15",
+            "A16"
+          ],
           "denied_columns": [],
           "row_filter": null,
-          "description": "지역·인구 통계 데이터 전체 관리"
+          "description_ko": "지역·인구 통계 데이터 전체 관리",
+          "description_en": "Full management of regional and demographic statistics data."
         },
         "client": {
-          "allowed_operations": ["SELECT", "INSERT", "UPDATE", "DELETE"],
-          "allowed_columns": ["client_id", "gender", "birth_date", "district_id"],
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE",
+            "DELETE"
+          ],
+          "allowed_columns": [
+            "client_id",
+            "gender",
+            "birth_date",
+            "district_id"
+          ],
           "denied_columns": [],
           "row_filter": null,
-          "description": "고객 개인정보 전체 관리"
+          "description_ko": "고객 개인정보 전체 관리",
+          "description_en": "Full management of client personal information."
         },
         "account": {
-          "allowed_operations": ["SELECT", "INSERT", "UPDATE", "DELETE"],
-          "allowed_columns": ["account_id", "district_id", "frequency", "date"],
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE",
+            "DELETE"
+          ],
+          "allowed_columns": [
+            "account_id",
+            "district_id",
+            "frequency",
+            "date"
+          ],
           "denied_columns": [],
           "row_filter": null,
-          "description": "계좌 정보 전체 관리"
+          "description_ko": "계좌 정보 전체 관리",
+          "description_en": "Full management of account information."
         },
         "disp": {
-          "allowed_operations": ["SELECT", "INSERT", "UPDATE", "DELETE"],
-          "allowed_columns": ["disp_id", "client_id", "account_id", "type"],
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE",
+            "DELETE"
+          ],
+          "allowed_columns": [
+            "disp_id",
+            "client_id",
+            "account_id",
+            "type"
+          ],
           "denied_columns": [],
           "row_filter": null,
-          "description": "고객-계좌 연결(disposition) 전체 관리"
+          "description_ko": "고객-계좌 연결(disposition) 전체 관리",
+          "description_en": "Full management of client-account linkage (disposition) records."
         },
         "card": {
-          "allowed_operations": ["SELECT", "INSERT", "UPDATE", "DELETE"],
-          "allowed_columns": ["card_id", "disp_id", "type", "issued"],
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE",
+            "DELETE"
+          ],
+          "allowed_columns": [
+            "card_id",
+            "disp_id",
+            "type",
+            "issued"
+          ],
           "denied_columns": [],
           "row_filter": null,
-          "description": "신용카드 정보 전체 관리"
+          "description_ko": "신용카드 정보 전체 관리",
+          "description_en": "Full management of credit card information."
         },
         "loan": {
-          "allowed_operations": ["SELECT", "INSERT", "UPDATE", "DELETE"],
-          "allowed_columns": ["loan_id", "account_id", "date", "amount", "duration", "payments", "status"],
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE",
+            "DELETE"
+          ],
+          "allowed_columns": [
+            "loan_id",
+            "account_id",
+            "date",
+            "amount",
+            "duration",
+            "payments",
+            "status"
+          ],
           "denied_columns": [],
           "row_filter": null,
-          "description": "대출 정보 전체 관리"
+          "description_ko": "대출 정보 전체 관리",
+          "description_en": "Full management of loan information."
         },
         "order": {
-          "allowed_operations": ["SELECT", "INSERT", "UPDATE", "DELETE"],
-          "allowed_columns": ["order_id", "account_id", "bank_to", "account_to", "amount", "k_symbol"],
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE",
+            "DELETE"
+          ],
+          "allowed_columns": [
+            "order_id",
+            "account_id",
+            "bank_to",
+            "account_to",
+            "amount",
+            "k_symbol"
+          ],
           "denied_columns": [],
           "row_filter": null,
-          "description": "자동이체(standing order) 정보 전체 관리"
+          "description_ko": "자동이체(standing order) 정보 전체 관리",
+          "description_en": "Full management of standing order information."
         },
         "trans": {
-          "allowed_operations": ["SELECT", "INSERT", "UPDATE", "DELETE"],
-          "allowed_columns": ["trans_id", "account_id", "date", "type", "operation", "amount", "balance", "k_symbol", "bank", "account"],
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE",
+            "DELETE"
+          ],
+          "allowed_columns": [
+            "trans_id",
+            "account_id",
+            "date",
+            "type",
+            "operation",
+            "amount",
+            "balance",
+            "k_symbol",
+            "bank",
+            "account"
+          ],
           "denied_columns": [],
           "row_filter": null,
-          "description": "거래 내역 전체 관리"
+          "description_ko": "거래 내역 전체 관리",
+          "description_en": "Full management of transaction records."
         }
       }
     },
     "compliance_officer": {
       "role_name": "compliance_officer",
       "display_name": "준법감시인 (Compliance Officer)",
-      "description": "자금세탁방지(AML), 고객확인(KYC), 규제 준수 감시를 위해 모든 데이터에 대한 읽기 권한을 보유. 데이터 수정 권한은 없으며, 감사·모니터링 목적으로만 접근.",
+      "description_ko": "자금세탁방지(AML), 고객확인(KYC), 규제 준수 감시를 위해 모든 데이터에 대한 읽기 권한을 보유. 데이터 수정 권한은 없으며, 감사·모니터링 목적으로만 접근.",
+      "description_en": "Has read access to all data for anti-money laundering (AML), know-your-customer (KYC), and regulatory compliance monitoring. No data modification permissions; access is limited to audit and monitoring purposes.",
       "level": 2,
       "table_permissions": {
         "district": {
-          "allowed_operations": ["SELECT"],
-          "allowed_columns": ["district_id", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9", "A10", "A11", "A12", "A13", "A14", "A15", "A16"],
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "district_id",
+            "A2",
+            "A3",
+            "A4",
+            "A5",
+            "A6",
+            "A7",
+            "A8",
+            "A9",
+            "A10",
+            "A11",
+            "A12",
+            "A13",
+            "A14",
+            "A15",
+            "A16"
+          ],
           "denied_columns": [],
           "row_filter": null,
-          "description": "규제 보고를 위한 지역 통계 전체 조회"
+          "description_ko": "규제 보고를 위한 지역 통계 전체 조회",
+          "description_en": "Full read access to regional statistics for regulatory reporting."
         },
         "client": {
-          "allowed_operations": ["SELECT"],
-          "allowed_columns": ["client_id", "gender", "birth_date", "district_id"],
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "client_id",
+            "gender",
+            "birth_date",
+            "district_id"
+          ],
           "denied_columns": [],
           "row_filter": null,
-          "description": "KYC/AML 심사를 위한 고객 정보 전체 조회"
+          "description_ko": "KYC/AML 심사를 위한 고객 정보 전체 조회",
+          "description_en": "Full read access to client information for KYC/AML screening."
         },
         "account": {
-          "allowed_operations": ["SELECT"],
-          "allowed_columns": ["account_id", "district_id", "frequency", "date"],
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "account_id",
+            "district_id",
+            "frequency",
+            "date"
+          ],
           "denied_columns": [],
           "row_filter": null,
-          "description": "계좌 활동 패턴 모니터링을 위한 전체 조회"
+          "description_ko": "계좌 활동 패턴 모니터링을 위한 전체 조회",
+          "description_en": "Full read access for monitoring account activity patterns."
         },
         "disp": {
-          "allowed_operations": ["SELECT"],
-          "allowed_columns": ["disp_id", "client_id", "account_id", "type"],
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "disp_id",
+            "client_id",
+            "account_id",
+            "type"
+          ],
           "denied_columns": [],
           "row_filter": null,
-          "description": "고객-계좌 관계 감시를 위한 전체 조회"
+          "description_ko": "고객-계좌 관계 감시를 위한 전체 조회",
+          "description_en": "Full read access for monitoring client-account relationships."
         },
         "card": {
-          "allowed_operations": ["SELECT"],
-          "allowed_columns": ["card_id", "disp_id", "type", "issued"],
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "card_id",
+            "disp_id",
+            "type",
+            "issued"
+          ],
           "denied_columns": [],
           "row_filter": null,
-          "description": "카드 발급 현황 및 이상 거래 추적을 위한 전체 조회"
+          "description_ko": "카드 발급 현황 및 이상 거래 추적을 위한 전체 조회",
+          "description_en": "Full read access for tracking card issuance status and suspicious transactions."
         },
         "loan": {
-          "allowed_operations": ["SELECT"],
-          "allowed_columns": ["loan_id", "account_id", "date", "amount", "duration", "payments", "status"],
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "loan_id",
+            "account_id",
+            "date",
+            "amount",
+            "duration",
+            "payments",
+            "status"
+          ],
           "denied_columns": [],
           "row_filter": null,
-          "description": "대출 건전성 및 부실 여부 감시를 위한 전체 조회"
+          "description_ko": "대출 건전성 및 부실 여부 감시를 위한 전체 조회",
+          "description_en": "Full read access for monitoring loan health and non-performing status."
         },
         "order": {
-          "allowed_operations": ["SELECT"],
-          "allowed_columns": ["order_id", "account_id", "bank_to", "account_to", "amount", "k_symbol"],
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "order_id",
+            "account_id",
+            "bank_to",
+            "account_to",
+            "amount",
+            "k_symbol"
+          ],
           "denied_columns": [],
           "row_filter": null,
-          "description": "자금 이동 패턴 및 의심 거래 추적을 위한 전체 조회"
+          "description_ko": "자금 이동 패턴 및 의심 거래 추적을 위한 전체 조회",
+          "description_en": "Full read access for tracking fund movement patterns and suspicious transactions."
         },
         "trans": {
-          "allowed_operations": ["SELECT"],
-          "allowed_columns": ["trans_id", "account_id", "date", "type", "operation", "amount", "balance", "k_symbol", "bank", "account"],
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "trans_id",
+            "account_id",
+            "date",
+            "type",
+            "operation",
+            "amount",
+            "balance",
+            "k_symbol",
+            "bank",
+            "account"
+          ],
           "denied_columns": [],
           "row_filter": null,
-          "description": "거래 내역 전체 조회 (AML 모니터링, 이상 거래 탐지)"
+          "description_ko": "거래 내역 전체 조회 (AML 모니터링, 이상 거래 탐지)",
+          "description_en": "Full read access to transaction records (AML monitoring, suspicious transaction detection)."
         }
       }
     },
     "branch_manager": {
       "role_name": "branch_manager",
       "display_name": "지점장 (Branch Manager)",
-      "description": "담당 지점의 전반적 운영을 관리. 계좌 개설, 대출 승인, 카드 발급 등 주요 업무 의사결정 권한 보유. 거래 내역은 조회만 가능하며, 고객 개인정보 수정은 불가.",
+      "description_ko": "담당 지점의 전반적 운영을 관리. 계좌 개설, 대출 승인, 카드 발급 등 주요 업무 의사결정 권한 보유. 거래 내역은 조회만 가능하며, 고객 개인정보 수정은 불가.",
+      "description_en": "Manages overall branch operations. Has decision-making authority for account opening, loan approval, and card issuance. Transaction records are read-only; client personal information cannot be modified.",
       "level": 3,
       "table_permissions": {
         "district": {
-          "allowed_operations": ["SELECT"],
-          "allowed_columns": ["district_id", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9", "A10", "A11", "A12", "A13", "A14", "A15", "A16"],
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "district_id",
+            "A2",
+            "A3",
+            "A4",
+            "A5",
+            "A6",
+            "A7",
+            "A8",
+            "A9",
+            "A10",
+            "A11",
+            "A12",
+            "A13",
+            "A14",
+            "A15",
+            "A16"
+          ],
           "denied_columns": [],
           "row_filter": null,
-          "description": "지점 소재 지역 및 영업 대상 지역 통계 조회"
+          "description_ko": "지점 소재 지역 및 영업 대상 지역 통계 조회",
+          "description_en": "Read access to statistics for the branch's district and target market areas."
         },
         "client": {
-          "allowed_operations": ["SELECT"],
-          "allowed_columns": ["client_id", "gender", "birth_date", "district_id"],
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "client_id",
+            "gender",
+            "birth_date",
+            "district_id"
+          ],
           "denied_columns": [],
           "row_filter": null,
-          "description": "고객 정보 조회 (수정은 admin만 가능)"
+          "description_ko": "고객 정보 조회 (수정은 admin만 가능)",
+          "description_en": "Read access to client information (modification is admin-only)."
         },
         "account": {
-          "allowed_operations": ["SELECT", "INSERT", "UPDATE"],
-          "allowed_columns": ["account_id", "district_id", "frequency", "date"],
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE"
+          ],
+          "allowed_columns": [
+            "account_id",
+            "district_id",
+            "frequency",
+            "date"
+          ],
           "denied_columns": [],
           "row_filter": null,
-          "description": "계좌 개설·관리 (삭제는 admin만 가능)"
+          "description_ko": "계좌 개설·관리 (삭제는 admin만 가능)",
+          "description_en": "Account opening and management (deletion is admin-only)."
         },
         "disp": {
-          "allowed_operations": ["SELECT", "INSERT", "UPDATE"],
-          "allowed_columns": ["disp_id", "client_id", "account_id", "type"],
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE"
+          ],
+          "allowed_columns": [
+            "disp_id",
+            "client_id",
+            "account_id",
+            "type"
+          ],
           "denied_columns": [],
           "row_filter": null,
-          "description": "고객-계좌 연결 설정 및 권한 유형 관리"
+          "description_ko": "고객-계좌 연결 설정 및 권한 유형 관리",
+          "description_en": "Setting up client-account linkages and managing disposition types."
         },
         "card": {
-          "allowed_operations": ["SELECT", "INSERT", "UPDATE"],
-          "allowed_columns": ["card_id", "disp_id", "type", "issued"],
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE"
+          ],
+          "allowed_columns": [
+            "card_id",
+            "disp_id",
+            "type",
+            "issued"
+          ],
           "denied_columns": [],
           "row_filter": null,
-          "description": "카드 발급 승인 및 등급 변경"
+          "description_ko": "카드 발급 승인 및 등급 변경",
+          "description_en": "Card issuance approval and tier changes."
         },
         "loan": {
-          "allowed_operations": ["SELECT", "INSERT", "UPDATE"],
-          "allowed_columns": ["loan_id", "account_id", "date", "amount", "duration", "payments", "status"],
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE"
+          ],
+          "allowed_columns": [
+            "loan_id",
+            "account_id",
+            "date",
+            "amount",
+            "duration",
+            "payments",
+            "status"
+          ],
           "denied_columns": [],
           "row_filter": null,
-          "description": "대출 승인·조건 변경 (최종 승인 권한)"
+          "description_ko": "대출 승인·조건 변경 (최종 승인 권한)",
+          "description_en": "Loan approval and condition modification (final approval authority)."
         },
         "order": {
-          "allowed_operations": ["SELECT", "INSERT", "UPDATE", "DELETE"],
-          "allowed_columns": ["order_id", "account_id", "bank_to", "account_to", "amount", "k_symbol"],
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE",
+            "DELETE"
+          ],
+          "allowed_columns": [
+            "order_id",
+            "account_id",
+            "bank_to",
+            "account_to",
+            "amount",
+            "k_symbol"
+          ],
           "denied_columns": [],
           "row_filter": null,
-          "description": "자동이체 전체 관리 (등록·수정·해지)"
+          "description_ko": "자동이체 전체 관리 (등록·수정·해지)",
+          "description_en": "Full management of standing orders (registration, modification, and cancellation)."
         },
         "trans": {
-          "allowed_operations": ["SELECT"],
-          "allowed_columns": ["trans_id", "account_id", "date", "type", "operation", "amount", "balance", "k_symbol", "bank", "account"],
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "trans_id",
+            "account_id",
+            "date",
+            "type",
+            "operation",
+            "amount",
+            "balance",
+            "k_symbol",
+            "bank",
+            "account"
+          ],
           "denied_columns": [],
           "row_filter": null,
-          "description": "거래 내역 조회만 가능 (거래 생성은 시스템/창구직원이 수행)"
+          "description_ko": "거래 내역 조회만 가능 (거래 생성은 시스템/창구직원이 수행)",
+          "description_en": "Read-only access to transaction records (transaction entry is performed by the system or tellers)."
         }
       }
     },
     "loan_officer": {
       "role_name": "loan_officer",
       "display_name": "여신심사역 (Loan Officer)",
-      "description": "대출 심사·관리 전문 담당자. 고객의 신용 평가를 위해 계좌·거래·카드 정보를 조회할 수 있으나, 대출 테이블 외에는 수정 권한 없음. 자동이체의 수취인 정보에는 접근 불가.",
+      "description_ko": "대출 심사·관리 전문 담당자. 고객의 신용 평가를 위해 계좌·거래·카드 정보를 조회할 수 있으나, 대출 테이블 외에는 수정 권한 없음. 자동이체의 수취인 정보에는 접근 불가.",
+      "description_en": "Specialist in loan assessment and management. Can view account, transaction, and card information for credit evaluation, but has no modification rights outside the loan table. Cannot access standing order recipient details.",
       "level": 4,
       "table_permissions": {
         "district": {
-          "allowed_operations": ["SELECT"],
-          "allowed_columns": ["district_id", "A2", "A3", "A4", "A10", "A11", "A12", "A13", "A14"],
-          "denied_columns": ["A5", "A6", "A7", "A8", "A9", "A15", "A16"],
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "district_id",
+            "A2",
+            "A3",
+            "A4",
+            "A10",
+            "A11",
+            "A12",
+            "A13",
+            "A14"
+          ],
+          "denied_columns": [
+            "A5",
+            "A6",
+            "A7",
+            "A8",
+            "A9",
+            "A15",
+            "A16"
+          ],
           "row_filter": null,
-          "description": "대출 리스크 평가에 필요한 지역 경제 지표(도시화율, 평균급여, 실업률, 자영업자 비율)만 조회. 인구분포·범죄통계는 접근 불가."
+          "description_ko": "대출 리스크 평가에 필요한 지역 경제 지표(도시화율, 평균급여, 실업률, 자영업자 비율)만 조회. 인구분포·범죄통계는 접근 불가.",
+          "description_en": "Read access limited to regional economic indicators needed for loan risk assessment (urbanization rate, average salary, unemployment rate, entrepreneur ratio). Population distribution and crime statistics are not accessible."
         },
         "client": {
-          "allowed_operations": ["SELECT"],
-          "allowed_columns": ["client_id", "gender", "birth_date", "district_id"],
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "client_id",
+            "gender",
+            "birth_date",
+            "district_id"
+          ],
           "denied_columns": [],
           "row_filter": null,
-          "description": "대출 신청자 본인 확인 및 인구통계 기반 신용 평가를 위한 조회"
+          "description_ko": "대출 신청자 본인 확인 및 인구통계 기반 신용 평가를 위한 조회",
+          "description_en": "Read access for loan applicant identity verification and demographic-based credit evaluation."
         },
         "account": {
-          "allowed_operations": ["SELECT"],
-          "allowed_columns": ["account_id", "district_id", "frequency", "date"],
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "account_id",
+            "district_id",
+            "frequency",
+            "date"
+          ],
           "denied_columns": [],
           "row_filter": null,
-          "description": "대출 연결 계좌 확인 및 계좌 이력 조회"
+          "description_ko": "대출 연결 계좌 확인 및 계좌 이력 조회",
+          "description_en": "Read access for verifying the linked account and reviewing account history."
         },
         "disp": {
-          "allowed_operations": ["SELECT"],
-          "allowed_columns": ["disp_id", "client_id", "account_id", "type"],
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "disp_id",
+            "client_id",
+            "account_id",
+            "type"
+          ],
           "denied_columns": [],
           "row_filter": null,
-          "description": "계좌 소유권 및 권한 유형 확인 (OWNER만 대출 신청 가능 여부 검증)"
+          "description_ko": "계좌 소유권 및 권한 유형 확인 (OWNER만 대출 신청 가능 여부 검증)",
+          "description_en": "Read access for verifying account ownership and disposition type (validating that only OWNER can apply for loans)."
         },
         "card": {
-          "allowed_operations": ["SELECT"],
-          "allowed_columns": ["card_id", "disp_id", "type"],
-          "denied_columns": ["issued"],
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "card_id",
+            "disp_id",
+            "type"
+          ],
+          "denied_columns": [
+            "issued"
+          ],
           "row_filter": null,
-          "description": "카드 등급(junior/classic/gold)으로 고객 신용 수준 참고. 발급일은 불필요."
+          "description_ko": "카드 등급(junior/classic/gold)으로 고객 신용 수준 참고. 발급일은 불필요.",
+          "description_en": "Card tier (junior/classic/gold) used as a reference for client credit level. Issue date is not needed."
         },
         "loan": {
-          "allowed_operations": ["SELECT", "INSERT", "UPDATE"],
-          "allowed_columns": ["loan_id", "account_id", "date", "amount", "duration", "payments", "status"],
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE"
+          ],
+          "allowed_columns": [
+            "loan_id",
+            "account_id",
+            "date",
+            "amount",
+            "duration",
+            "payments",
+            "status"
+          ],
           "denied_columns": [],
           "row_filter": null,
-          "description": "대출 심사·승인·상태 변경 (핵심 업무 테이블)"
+          "description_ko": "대출 심사·승인·상태 변경 (핵심 업무 테이블)",
+          "description_en": "Loan assessment, approval, and status changes (core business table)."
         },
         "order": {
-          "allowed_operations": ["SELECT"],
-          "allowed_columns": ["order_id", "account_id", "amount", "k_symbol"],
-          "denied_columns": ["bank_to", "account_to"],
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "order_id",
+            "account_id",
+            "amount",
+            "k_symbol"
+          ],
+          "denied_columns": [
+            "bank_to",
+            "account_to"
+          ],
           "row_filter": null,
-          "description": "고정 지출(보험료, 대출상환 등) 파악을 위한 자동이체 금액·유형 조회. 수취인 은행·계좌 정보는 접근 불가."
+          "description_ko": "고정 지출(보험료, 대출상환 등) 파악을 위한 자동이체 금액·유형 조회. 수취인 은행·계좌 정보는 접근 불가.",
+          "description_en": "Read access to standing order amounts and types for assessing fixed expenses (insurance, loan repayment, etc.). Recipient bank and account information is not accessible."
         },
         "trans": {
-          "allowed_operations": ["SELECT"],
-          "allowed_columns": ["trans_id", "account_id", "date", "type", "amount", "balance", "k_symbol"],
-          "denied_columns": ["operation", "bank", "account"],
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "trans_id",
+            "account_id",
+            "date",
+            "type",
+            "amount",
+            "balance",
+            "k_symbol"
+          ],
+          "denied_columns": [
+            "operation",
+            "bank",
+            "account"
+          ],
           "row_filter": null,
-          "description": "상환 능력 평가를 위한 거래 금액·잔액·유형 조회. 거래 상대방 은행·계좌 정보는 접근 불가."
+          "description_ko": "상환 능력 평가를 위한 거래 금액·잔액·유형 조회. 거래 상대방 은행·계좌 정보는 접근 불가.",
+          "description_en": "Read access to transaction amounts, balances, and types for repayment capacity assessment. Counterparty bank and account information is not accessible."
         }
       }
     },
     "teller": {
       "role_name": "teller",
       "display_name": "은행 창구직원 (Bank Teller)",
-      "description": "일상적 은행 창구 업무 수행. 입출금 거래 처리, 자동이체 등록이 주 업무. 대출 금액·조건 등 민감 금융정보 접근 제한. 지역 통계 데이터는 업무 범위 밖.",
+      "description_ko": "일상적 은행 창구 업무 수행. 입출금 거래 처리, 자동이체 등록이 주 업무. 대출 금액·조건 등 민감 금융정보 접근 제한. 지역 통계 데이터는 업무 범위 밖.",
+      "description_en": "Handles daily bank counter operations. Primary duties include processing deposit/withdrawal transactions and registering standing orders. Access to sensitive financial details such as loan amounts and conditions is restricted. Regional statistics are outside the scope of duties.",
       "level": 5,
       "table_permissions": {
         "district": {
-          "allowed_operations": ["SELECT"],
-          "allowed_columns": ["district_id", "A2", "A3"],
-          "denied_columns": ["A4", "A5", "A6", "A7", "A8", "A9", "A10", "A11", "A12", "A13", "A14", "A15", "A16"],
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "district_id",
+            "A2",
+            "A3"
+          ],
+          "denied_columns": [
+            "A4",
+            "A5",
+            "A6",
+            "A7",
+            "A8",
+            "A9",
+            "A10",
+            "A11",
+            "A12",
+            "A13",
+            "A14",
+            "A15",
+            "A16"
+          ],
           "row_filter": null,
-          "description": "지점 소재지 기본 정보(지역명, 권역명)만 조회. 인구·경제 통계는 접근 불가."
+          "description_ko": "지점 소재지 기본 정보(지역명, 권역명)만 조회. 인구·경제 통계는 접근 불가.",
+          "description_en": "Read access limited to basic branch location information (district name, region name). Population and economic statistics are not accessible."
         },
         "client": {
-          "allowed_operations": ["SELECT"],
-          "allowed_columns": ["client_id", "gender", "birth_date", "district_id"],
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "client_id",
+            "gender",
+            "birth_date",
+            "district_id"
+          ],
           "denied_columns": [],
           "row_filter": null,
-          "description": "창구 방문 고객 본인 확인을 위한 기본 정보 조회"
+          "description_ko": "창구 방문 고객 본인 확인을 위한 기본 정보 조회",
+          "description_en": "Read access to basic client information for in-person identity verification at the counter."
         },
         "account": {
-          "allowed_operations": ["SELECT"],
-          "allowed_columns": ["account_id", "district_id", "frequency", "date"],
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "account_id",
+            "district_id",
+            "frequency",
+            "date"
+          ],
           "denied_columns": [],
           "row_filter": null,
-          "description": "거래 처리를 위한 계좌 정보 조회"
+          "description_ko": "거래 처리를 위한 계좌 정보 조회",
+          "description_en": "Read access to account information for transaction processing."
         },
         "disp": {
-          "allowed_operations": ["SELECT"],
-          "allowed_columns": ["disp_id", "client_id", "account_id", "type"],
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "disp_id",
+            "client_id",
+            "account_id",
+            "type"
+          ],
           "denied_columns": [],
           "row_filter": null,
-          "description": "계좌 접근 권한 확인 (거래 요청자가 정당한 권한 보유 여부 검증)"
+          "description_ko": "계좌 접근 권한 확인 (거래 요청자가 정당한 권한 보유 여부 검증)",
+          "description_en": "Read access for verifying account access rights (validating that the requester holds legitimate authority)."
         },
         "card": {
-          "allowed_operations": ["SELECT"],
-          "allowed_columns": ["card_id", "disp_id", "type"],
-          "denied_columns": ["issued"],
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "card_id",
+            "disp_id",
+            "type"
+          ],
+          "denied_columns": [
+            "issued"
+          ],
           "row_filter": null,
-          "description": "카드 거래 처리 시 카드 유형 확인. 발급일은 불필요."
+          "description_ko": "카드 거래 처리 시 카드 유형 확인. 발급일은 불필요.",
+          "description_en": "Card type verification during card transaction processing. Issue date is not needed."
         },
         "loan": {
-          "allowed_operations": ["SELECT"],
-          "allowed_columns": ["loan_id", "account_id", "status"],
-          "denied_columns": ["date", "amount", "duration", "payments"],
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "loan_id",
+            "account_id",
+            "status"
+          ],
+          "denied_columns": [
+            "date",
+            "amount",
+            "duration",
+            "payments"
+          ],
           "row_filter": null,
-          "description": "대출 존재 여부·상태만 확인 가능. 대출 금액·기간·상환액 등 상세 조건은 여신심사역/지점장만 조회 가능."
+          "description_ko": "대출 존재 여부·상태만 확인 가능. 대출 금액·기간·상환액 등 상세 조건은 여신심사역/지점장만 조회 가능.",
+          "description_en": "Can only verify loan existence and status. Detailed conditions such as loan amount, duration, and payments are accessible only to loan officers or branch managers."
         },
         "order": {
-          "allowed_operations": ["SELECT", "INSERT", "UPDATE"],
-          "allowed_columns": ["order_id", "account_id", "bank_to", "account_to", "amount", "k_symbol"],
+          "allowed_operations": [
+            "SELECT",
+            "INSERT",
+            "UPDATE"
+          ],
+          "allowed_columns": [
+            "order_id",
+            "account_id",
+            "bank_to",
+            "account_to",
+            "amount",
+            "k_symbol"
+          ],
           "denied_columns": [],
           "row_filter": null,
-          "description": "고객 요청에 따른 자동이체 등록·수정. 해지(DELETE)는 지점장 이상만 가능."
+          "description_ko": "고객 요청에 따른 자동이체 등록·수정. 해지(DELETE)는 지점장 이상만 가능.",
+          "description_en": "Standing order registration and modification per customer request. Cancellation (DELETE) requires branch manager or higher authority."
         },
         "trans": {
-          "allowed_operations": ["SELECT", "INSERT"],
-          "allowed_columns": ["trans_id", "account_id", "date", "type", "operation", "amount", "balance", "k_symbol", "bank", "account"],
+          "allowed_operations": [
+            "SELECT",
+            "INSERT"
+          ],
+          "allowed_columns": [
+            "trans_id",
+            "account_id",
+            "date",
+            "type",
+            "operation",
+            "amount",
+            "balance",
+            "k_symbol",
+            "bank",
+            "account"
+          ],
           "denied_columns": [],
           "row_filter": null,
-          "description": "입출금·이체 등 거래 처리(INSERT) 및 거래 내역 조회(SELECT)"
+          "description_ko": "입출금·이체 등 거래 처리(INSERT) 및 거래 내역 조회(SELECT)",
+          "description_en": "Transaction processing (INSERT) for deposits, withdrawals, and transfers, and read access (SELECT) to transaction records."
         }
       }
     },
     "customer_service": {
       "role_name": "customer_service",
       "display_name": "고객상담원 (Customer Service Representative)",
-      "description": "전화·온라인 고객 상담 업무 수행. 고객 문의 대응을 위한 기본 정보 조회만 가능. 금융 거래 상세, 거래 상대방 정보, 대출 조건 등 민감 정보 접근 불가. 모든 데이터 수정 권한 없음.",
+      "description_ko": "전화·온라인 고객 상담 업무 수행. 고객 문의 대응을 위한 기본 정보 조회만 가능. 금융 거래 상세, 거래 상대방 정보, 대출 조건 등 민감 정보 접근 불가. 모든 데이터 수정 권한 없음.",
+      "description_en": "Handles customer service via phone and online channels. Limited to basic information lookup for responding to customer inquiries. Cannot access sensitive details such as detailed financial transactions, counterparty information, or loan conditions. No data modification permissions.",
       "level": 6,
       "table_permissions": {
         "district": {
-          "allowed_operations": ["SELECT"],
-          "allowed_columns": ["district_id", "A2", "A3"],
-          "denied_columns": ["A4", "A5", "A6", "A7", "A8", "A9", "A10", "A11", "A12", "A13", "A14", "A15", "A16"],
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "district_id",
+            "A2",
+            "A3"
+          ],
+          "denied_columns": [
+            "A4",
+            "A5",
+            "A6",
+            "A7",
+            "A8",
+            "A9",
+            "A10",
+            "A11",
+            "A12",
+            "A13",
+            "A14",
+            "A15",
+            "A16"
+          ],
           "row_filter": null,
-          "description": "고객 문의 시 지점 위치 안내를 위한 최소 정보만 조회"
+          "description_ko": "고객 문의 시 지점 위치 안내를 위한 최소 정보만 조회",
+          "description_en": "Minimal read access for guiding customers to branch locations during inquiries."
         },
         "client": {
-          "allowed_operations": ["SELECT"],
-          "allowed_columns": ["client_id", "gender", "district_id"],
-          "denied_columns": ["birth_date"],
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "client_id",
+            "gender",
+            "district_id"
+          ],
+          "denied_columns": [
+            "birth_date"
+          ],
           "row_filter": null,
-          "description": "고객 식별을 위한 기본 정보 조회. 생년월일(PII)은 접근 불가."
+          "description_ko": "고객 식별을 위한 기본 정보 조회. 생년월일(PII)은 접근 불가.",
+          "description_en": "Read access to basic information for client identification. Birth date (PII) is not accessible."
         },
         "account": {
-          "allowed_operations": ["SELECT"],
-          "allowed_columns": ["account_id", "district_id", "frequency"],
-          "denied_columns": ["date"],
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "account_id",
+            "district_id",
+            "frequency"
+          ],
+          "denied_columns": [
+            "date"
+          ],
           "row_filter": null,
-          "description": "계좌 기본 정보 조회. 계좌 개설일은 접근 불가."
+          "description_ko": "계좌 기본 정보 조회. 계좌 개설일은 접근 불가.",
+          "description_en": "Read access to basic account information. Account opening date is not accessible."
         },
         "disp": {
-          "allowed_operations": ["SELECT"],
-          "allowed_columns": ["disp_id", "client_id", "account_id", "type"],
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "disp_id",
+            "client_id",
+            "account_id",
+            "type"
+          ],
           "denied_columns": [],
           "row_filter": null,
-          "description": "고객-계좌 연결 관계 확인 (상담 시 계좌 소유 여부 확인)"
+          "description_ko": "고객-계좌 연결 관계 확인 (상담 시 계좌 소유 여부 확인)",
+          "description_en": "Read access for verifying client-account linkage (confirming account ownership during consultations)."
         },
         "card": {
-          "allowed_operations": ["SELECT"],
-          "allowed_columns": ["card_id", "disp_id", "type"],
-          "denied_columns": ["issued"],
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "card_id",
+            "disp_id",
+            "type"
+          ],
+          "denied_columns": [
+            "issued"
+          ],
           "row_filter": null,
-          "description": "카드 종류 확인 (분실 신고, 등급 문의 대응). 발급일은 접근 불가."
+          "description_ko": "카드 종류 확인 (분실 신고, 등급 문의 대응). 발급일은 접근 불가.",
+          "description_en": "Card type verification (for handling lost card reports and tier inquiries). Issue date is not accessible."
         },
         "loan": {
-          "allowed_operations": ["SELECT"],
-          "allowed_columns": ["loan_id", "account_id", "status"],
-          "denied_columns": ["date", "amount", "duration", "payments"],
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "loan_id",
+            "account_id",
+            "status"
+          ],
+          "denied_columns": [
+            "date",
+            "amount",
+            "duration",
+            "payments"
+          ],
           "row_filter": null,
-          "description": "대출 상태만 확인 가능 (정상/연체 여부). 대출 금액·조건은 여신심사역에게 안내."
+          "description_ko": "대출 상태만 확인 가능 (정상/연체 여부). 대출 금액·조건은 여신심사역에게 안내.",
+          "description_en": "Can only check loan status (normal/delinquent). Loan amounts and conditions should be referred to the loan officer."
         },
         "order": {
-          "allowed_operations": ["SELECT"],
-          "allowed_columns": ["order_id", "account_id", "k_symbol"],
-          "denied_columns": ["bank_to", "account_to", "amount"],
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "order_id",
+            "account_id",
+            "k_symbol"
+          ],
+          "denied_columns": [
+            "bank_to",
+            "account_to",
+            "amount"
+          ],
           "row_filter": null,
-          "description": "자동이체 존재 여부·유형만 확인. 금액·수취인 정보는 접근 불가."
+          "description_ko": "자동이체 존재 여부·유형만 확인. 금액·수취인 정보는 접근 불가.",
+          "description_en": "Can only verify standing order existence and type. Amount and recipient information are not accessible."
         },
         "trans": {
-          "allowed_operations": ["SELECT"],
-          "allowed_columns": ["trans_id", "account_id", "date", "type", "amount", "balance"],
-          "denied_columns": ["operation", "k_symbol", "bank", "account"],
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "trans_id",
+            "account_id",
+            "date",
+            "type",
+            "amount",
+            "balance"
+          ],
+          "denied_columns": [
+            "operation",
+            "k_symbol",
+            "bank",
+            "account"
+          ],
           "row_filter": null,
-          "description": "거래 일자·유형·금액·잔액 조회 가능 (잔액 문의·거래 분쟁 기본 확인용). 거래 수단 상세, 거래 분류, 거래 상대방 정보는 접근 불가."
+          "description_ko": "거래 일자·유형·금액·잔액 조회 가능 (잔액 문의·거래 분쟁 기본 확인용). 거래 수단 상세, 거래 분류, 거래 상대방 정보는 접근 불가.",
+          "description_en": "Read access to transaction date, type, amount, and balance (for balance inquiries and basic dispute verification). Transaction operation details, categories, and counterparty information are not accessible."
         }
       }
     },
     "data_analyst": {
       "role_name": "data_analyst",
       "display_name": "데이터 분석가 (Data Analyst)",
-      "description": "비즈니스 인사이트 도출을 위한 데이터 분석 업무 수행. 개인식별정보(PII) 접근이 제한되며, 집계·통계 분석 목적으로만 데이터 조회 가능. 모든 테이블에 대해 쓰기 권한 없음.",
+      "description_ko": "비즈니스 인사이트 도출을 위한 데이터 분석 업무 수행. 개인식별정보(PII) 접근이 제한되며, 집계·통계 분석 목적으로만 데이터 조회 가능. 모든 테이블에 대해 쓰기 권한 없음.",
+      "description_en": "Performs data analysis for deriving business insights. Access to personally identifiable information (PII) is restricted; data can only be queried for aggregate and statistical analysis purposes. No write permissions on any table.",
       "level": 7,
       "table_permissions": {
         "district": {
-          "allowed_operations": ["SELECT"],
-          "allowed_columns": ["district_id", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9", "A10", "A11", "A12", "A13", "A14", "A15", "A16"],
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "district_id",
+            "A2",
+            "A3",
+            "A4",
+            "A5",
+            "A6",
+            "A7",
+            "A8",
+            "A9",
+            "A10",
+            "A11",
+            "A12",
+            "A13",
+            "A14",
+            "A15",
+            "A16"
+          ],
           "denied_columns": [],
           "row_filter": null,
-          "description": "지역 인구·경제 통계 전체 조회 (집계 데이터로 PII 미포함)"
+          "description_ko": "지역 인구·경제 통계 전체 조회 (집계 데이터로 PII 미포함)",
+          "description_en": "Full read access to regional population and economic statistics (aggregate data, no PII)."
         },
         "client": {
-          "allowed_operations": ["SELECT"],
-          "allowed_columns": ["gender", "district_id"],
-          "denied_columns": ["client_id", "birth_date"],
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "gender",
+            "district_id"
+          ],
+          "denied_columns": [
+            "client_id",
+            "birth_date"
+          ],
           "row_filter": null,
-          "description": "성별·지역별 고객 분포 분석만 가능. 개인 식별 가능한 client_id, birth_date는 접근 불가."
+          "description_ko": "성별·지역별 고객 분포 분석만 가능. 개인 식별 가능한 client_id, birth_date는 접근 불가.",
+          "description_en": "Limited to analyzing customer distribution by gender and district. Personally identifiable client_id and birth_date are not accessible."
         },
         "account": {
-          "allowed_operations": ["SELECT"],
-          "allowed_columns": ["account_id", "district_id", "frequency", "date"],
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "account_id",
+            "district_id",
+            "frequency",
+            "date"
+          ],
           "denied_columns": [],
           "row_filter": null,
-          "description": "계좌 개설 패턴·지역별 분포·이용 빈도 분석"
+          "description_ko": "계좌 개설 패턴·지역별 분포·이용 빈도 분석",
+          "description_en": "Analysis of account opening patterns, regional distribution, and usage frequency."
         },
         "disp": {
-          "allowed_operations": ["SELECT"],
-          "allowed_columns": ["account_id", "type"],
-          "denied_columns": ["disp_id", "client_id"],
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "account_id",
+            "type"
+          ],
+          "denied_columns": [
+            "disp_id",
+            "client_id"
+          ],
           "row_filter": null,
-          "description": "계좌별 권한 유형(OWNER/USER/DISPONENT) 분포 분석. 개인 식별 가능한 disp_id, client_id는 접근 불가."
+          "description_ko": "계좌별 권한 유형(OWNER/USER/DISPONENT) 분포 분석. 개인 식별 가능한 disp_id, client_id는 접근 불가.",
+          "description_en": "Analysis of disposition type distribution (OWNER/USER/DISPONENT) per account. Personally identifiable disp_id and client_id are not accessible."
         },
         "card": {
-          "allowed_operations": ["SELECT"],
-          "allowed_columns": ["type", "issued"],
-          "denied_columns": ["card_id", "disp_id"],
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "type",
+            "issued"
+          ],
+          "denied_columns": [
+            "card_id",
+            "disp_id"
+          ],
           "row_filter": null,
-          "description": "카드 유형·발급 추이 분석. 개인 연결 가능한 card_id, disp_id는 접근 불가."
+          "description_ko": "카드 유형·발급 추이 분석. 개인 연결 가능한 card_id, disp_id는 접근 불가.",
+          "description_en": "Analysis of card type distribution and issuance trends. Personally linkable card_id and disp_id are not accessible."
         },
         "loan": {
-          "allowed_operations": ["SELECT"],
-          "allowed_columns": ["loan_id", "date", "amount", "duration", "payments", "status"],
-          "denied_columns": ["account_id"],
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "loan_id",
+            "date",
+            "amount",
+            "duration",
+            "payments",
+            "status"
+          ],
+          "denied_columns": [
+            "account_id"
+          ],
           "row_filter": null,
-          "description": "대출 포트폴리오 분석(규모, 기간, 상환율, 부실률). account_id를 통한 개인 연결 차단."
+          "description_ko": "대출 포트폴리오 분석(규모, 기간, 상환율, 부실률). account_id를 통한 개인 연결 차단.",
+          "description_en": "Loan portfolio analysis (volume, duration, repayment rate, default rate). Individual linkage via account_id is blocked."
         },
         "order": {
-          "allowed_operations": ["SELECT"],
-          "allowed_columns": ["amount", "k_symbol"],
-          "denied_columns": ["order_id", "account_id", "bank_to", "account_to"],
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "amount",
+            "k_symbol"
+          ],
+          "denied_columns": [
+            "order_id",
+            "account_id",
+            "bank_to",
+            "account_to"
+          ],
           "row_filter": null,
-          "description": "자동이체 유형별 금액 분포 분석. 개인·계좌·수취인 식별 정보는 접근 불가."
+          "description_ko": "자동이체 유형별 금액 분포 분석. 개인·계좌·수취인 식별 정보는 접근 불가.",
+          "description_en": "Analysis of amount distribution by standing order type. Individual, account, and recipient identifying information is not accessible."
         },
         "trans": {
-          "allowed_operations": ["SELECT"],
-          "allowed_columns": ["date", "type", "operation", "amount", "k_symbol"],
-          "denied_columns": ["trans_id", "account_id", "balance", "bank", "account"],
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "date",
+            "type",
+            "operation",
+            "amount",
+            "k_symbol"
+          ],
+          "denied_columns": [
+            "trans_id",
+            "account_id",
+            "balance",
+            "bank",
+            "account"
+          ],
           "row_filter": null,
-          "description": "거래 유형·금액·추이 분석. 개인 잔액, 거래 ID, 계좌 번호, 거래 상대방 정보는 접근 불가."
+          "description_ko": "거래 유형·금액·추이 분석. 개인 잔액, 거래 ID, 계좌 번호, 거래 상대방 정보는 접근 불가.",
+          "description_en": "Analysis of transaction types, amounts, and trends. Individual balances, transaction IDs, account numbers, and counterparty information are not accessible."
         }
       }
     },
     "auditor": {
       "role_name": "auditor",
       "display_name": "외부 감사인 (External Auditor)",
-      "description": "회계 감사·내부 통제 검증 목적으로 금융 데이터에 접근하는 외부 감사인. 금융 거래의 정합성과 정확성 검증에 필요한 데이터를 조회할 수 있으나, 고객 개인정보(PII)에 대한 접근은 제한됨. 모든 데이터 수정 불가.",
+      "description_ko": "회계 감사·내부 통제 검증 목적으로 금융 데이터에 접근하는 외부 감사인. 금융 거래의 정합성과 정확성 검증에 필요한 데이터를 조회할 수 있으나, 고객 개인정보(PII)에 대한 접근은 제한됨. 모든 데이터 수정 불가.",
+      "description_en": "External auditor accessing financial data for accounting audit and internal control verification. Can query data needed to verify the integrity and accuracy of financial transactions, but access to client personal information (PII) is restricted. No data modification allowed.",
       "level": 8,
       "table_permissions": {
         "district": {
-          "allowed_operations": ["SELECT"],
-          "allowed_columns": ["district_id", "A2", "A3"],
-          "denied_columns": ["A4", "A5", "A6", "A7", "A8", "A9", "A10", "A11", "A12", "A13", "A14", "A15", "A16"],
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "district_id",
+            "A2",
+            "A3"
+          ],
+          "denied_columns": [
+            "A4",
+            "A5",
+            "A6",
+            "A7",
+            "A8",
+            "A9",
+            "A10",
+            "A11",
+            "A12",
+            "A13",
+            "A14",
+            "A15",
+            "A16"
+          ],
           "row_filter": null,
-          "description": "감사 보고서 작성 시 지점 식별을 위한 기본 지역 정보만 조회. 상세 인구·경제 통계는 감사 범위 외."
+          "description_ko": "감사 보고서 작성 시 지점 식별을 위한 기본 지역 정보만 조회. 상세 인구·경제 통계는 감사 범위 외.",
+          "description_en": "Read access limited to basic district information for branch identification in audit reports. Detailed population and economic statistics are outside the audit scope."
         },
         "client": {
-          "allowed_operations": ["SELECT"],
-          "allowed_columns": ["client_id", "district_id"],
-          "denied_columns": ["gender", "birth_date"],
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "client_id",
+            "district_id"
+          ],
+          "denied_columns": [
+            "gender",
+            "birth_date"
+          ],
           "row_filter": null,
-          "description": "고객 수·지역 분포 확인용. 성별·생년월일 등 민감 개인정보는 접근 불가 (개인정보보호법 준수)."
+          "description_ko": "고객 수·지역 분포 확인용. 성별·생년월일 등 민감 개인정보는 접근 불가 (개인정보보호법 준수).",
+          "description_en": "For verifying client counts and regional distribution. Sensitive personal data such as gender and birth date are not accessible (in compliance with data protection regulations)."
         },
         "account": {
-          "allowed_operations": ["SELECT"],
-          "allowed_columns": ["account_id", "district_id", "frequency", "date"],
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "account_id",
+            "district_id",
+            "frequency",
+            "date"
+          ],
           "denied_columns": [],
           "row_filter": null,
-          "description": "계좌 현황·개설 이력 감사"
+          "description_ko": "계좌 현황·개설 이력 감사",
+          "description_en": "Audit of account status and opening history."
         },
         "disp": {
-          "allowed_operations": ["SELECT"],
-          "allowed_columns": ["disp_id", "client_id", "account_id", "type"],
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "disp_id",
+            "client_id",
+            "account_id",
+            "type"
+          ],
           "denied_columns": [],
           "row_filter": null,
-          "description": "계좌 접근 권한 체계의 적절성 감사"
+          "description_ko": "계좌 접근 권한 체계의 적절성 감사",
+          "description_en": "Audit of the appropriateness of account access authority structures."
         },
         "card": {
-          "allowed_operations": ["SELECT"],
-          "allowed_columns": ["card_id", "disp_id", "type", "issued"],
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "card_id",
+            "disp_id",
+            "type",
+            "issued"
+          ],
           "denied_columns": [],
           "row_filter": null,
-          "description": "카드 발급 프로세스 및 승인 체계 감사"
+          "description_ko": "카드 발급 프로세스 및 승인 체계 감사",
+          "description_en": "Audit of card issuance processes and approval structures."
         },
         "loan": {
-          "allowed_operations": ["SELECT"],
-          "allowed_columns": ["loan_id", "account_id", "date", "amount", "duration", "payments", "status"],
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "loan_id",
+            "account_id",
+            "date",
+            "amount",
+            "duration",
+            "payments",
+            "status"
+          ],
           "denied_columns": [],
           "row_filter": null,
-          "description": "대출 승인 기준, 부실 대출, 상환 현황 전체 감사"
+          "description_ko": "대출 승인 기준, 부실 대출, 상환 현황 전체 감사",
+          "description_en": "Full audit of loan approval criteria, non-performing loans, and repayment status."
         },
         "order": {
-          "allowed_operations": ["SELECT"],
-          "allowed_columns": ["order_id", "account_id", "bank_to", "account_to", "amount", "k_symbol"],
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "order_id",
+            "account_id",
+            "bank_to",
+            "account_to",
+            "amount",
+            "k_symbol"
+          ],
           "denied_columns": [],
           "row_filter": null,
-          "description": "자동이체 금액·수취처 감사 (자금 흐름 추적)"
+          "description_ko": "자동이체 금액·수취처 감사 (자금 흐름 추적)",
+          "description_en": "Audit of standing order amounts and recipients (fund flow tracking)."
         },
         "trans": {
-          "allowed_operations": ["SELECT"],
-          "allowed_columns": ["trans_id", "account_id", "date", "type", "operation", "amount", "balance", "k_symbol", "bank", "account"],
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "trans_id",
+            "account_id",
+            "date",
+            "type",
+            "operation",
+            "amount",
+            "balance",
+            "k_symbol",
+            "bank",
+            "account"
+          ],
           "denied_columns": [],
           "row_filter": null,
-          "description": "전체 거래 내역 감사 (회계 정합성, 이상 거래 검증)"
+          "description_ko": "전체 거래 내역 감사 (회계 정합성, 이상 거래 검증)",
+          "description_en": "Full audit of transaction records (accounting integrity, suspicious transaction verification)."
         }
       }
     },
     "customer": {
       "role_name": "customer",
       "display_name": "은행 고객 (Bank Customer)",
-      "description": "인터넷/모바일 뱅킹을 통해 자신의 금융 정보만 조회할 수 있는 일반 고객. 본인 계좌에 연결된 데이터만 접근 가능(행 수준 필터 적용). 타인의 데이터 및 내부 시스템 정보에는 일체 접근 불가. 모든 데이터 수정 불가.",
+      "description_ko": "인터넷/모바일 뱅킹을 통해 자신의 금융 정보만 조회할 수 있는 일반 고객. 본인 계좌에 연결된 데이터만 접근 가능(행 수준 필터 적용). 타인의 데이터 및 내부 시스템 정보에는 일체 접근 불가. 모든 데이터 수정 불가.",
+      "description_en": "General customer who can only view their own financial information via internet/mobile banking. Access is limited to data linked to their own accounts (row-level filters applied). No access to other customers' data or internal system information. No data modification allowed.",
       "level": 9,
       "table_permissions": {
         "district": {
           "allowed_operations": [],
           "allowed_columns": [],
-          "denied_columns": ["district_id", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9", "A10", "A11", "A12", "A13", "A14", "A15", "A16"],
+          "denied_columns": [
+            "district_id",
+            "A2",
+            "A3",
+            "A4",
+            "A5",
+            "A6",
+            "A7",
+            "A8",
+            "A9",
+            "A10",
+            "A11",
+            "A12",
+            "A13",
+            "A14",
+            "A15",
+            "A16"
+          ],
           "row_filter": null,
-          "description": "접근 불가. 지역 통계 데이터는 내부 업무용으로 고객에게 제공되지 않음."
+          "description_ko": "접근 불가. 지역 통계 데이터는 내부 업무용으로 고객에게 제공되지 않음.",
+          "description_en": "No access. Regional statistics data is for internal use only and not provided to customers."
         },
         "client": {
           "allowed_operations": [],
           "allowed_columns": [],
-          "denied_columns": ["client_id", "gender", "birth_date", "district_id"],
+          "denied_columns": [
+            "client_id",
+            "gender",
+            "birth_date",
+            "district_id"
+          ],
           "row_filter": null,
-          "description": "접근 불가. 고객 테이블 직접 조회는 내부 시스템 전용."
+          "description_ko": "접근 불가. 고객 테이블 직접 조회는 내부 시스템 전용.",
+          "description_en": "No access. Direct querying of the client table is reserved for internal systems only."
         },
         "account": {
-          "allowed_operations": ["SELECT"],
-          "allowed_columns": ["account_id", "frequency", "date"],
-          "denied_columns": ["district_id"],
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "account_id",
+            "frequency",
+            "date"
+          ],
+          "denied_columns": [
+            "district_id"
+          ],
           "row_filter": "account_id IN (SELECT account_id FROM disp WHERE client_id = {current_user_client_id})",
-          "description": "본인 소유 계좌 정보만 조회 가능. 지점 내부 코드(district_id)는 접근 불가."
+          "description_ko": "본인 소유 계좌 정보만 조회 가능. 지점 내부 코드(district_id)는 접근 불가.",
+          "description_en": "Can only view information for own accounts. Internal branch code (district_id) is not accessible."
         },
         "disp": {
-          "allowed_operations": ["SELECT"],
-          "allowed_columns": ["disp_id", "client_id", "account_id", "type"],
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "disp_id",
+            "client_id",
+            "account_id",
+            "type"
+          ],
           "denied_columns": [],
           "row_filter": "client_id = {current_user_client_id}",
-          "description": "본인의 계좌-고객 연결 정보만 조회 가능. 타인의 disposition 레코드는 행 수준 필터에 의해 차단."
+          "description_ko": "본인의 계좌-고객 연결 정보만 조회 가능. 타인의 disposition 레코드는 행 수준 필터에 의해 차단.",
+          "description_en": "Can only view own client-account linkage information. Other clients' disposition records are blocked by the row-level filter."
         },
         "card": {
-          "allowed_operations": ["SELECT"],
-          "allowed_columns": ["card_id", "type", "issued"],
-          "denied_columns": ["disp_id"],
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "card_id",
+            "type",
+            "issued"
+          ],
+          "denied_columns": [
+            "disp_id"
+          ],
           "row_filter": "disp_id IN (SELECT disp_id FROM disp WHERE client_id = {current_user_client_id} AND type = 'OWNER')",
-          "description": "본인이 OWNER로 연결된 계좌의 카드 정보(유형, 발급일)만 조회 가능. DISPONENT로 연결된 계좌의 카드는 신원·신용 기반 정보이므로 row_filter에 의해 제외됨. 내부 disposition ID는 접근 불가."
+          "description_ko": "본인이 OWNER로 연결된 계좌의 카드 정보(유형, 발급일)만 조회 가능. DISPONENT로 연결된 계좌의 카드는 신원·신용 기반 정보이므로 row_filter에 의해 제외됨. 내부 disposition ID는 접근 불가.",
+          "description_en": "Can only view card information (type, issue date) for accounts where the customer is linked as OWNER. Cards for accounts linked as DISPONENT are excluded by the row filter since they are identity/credit-based information. Internal disposition ID is not accessible."
         },
         "loan": {
-          "allowed_operations": ["SELECT"],
-          "allowed_columns": ["loan_id", "date", "amount", "duration", "payments", "status"],
-          "denied_columns": ["account_id"],
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "loan_id",
+            "date",
+            "amount",
+            "duration",
+            "payments",
+            "status"
+          ],
+          "denied_columns": [
+            "account_id"
+          ],
           "row_filter": "account_id IN (SELECT account_id FROM disp WHERE client_id = {current_user_client_id} AND type = 'OWNER')",
-          "description": "본인이 OWNER로 연결된 계좌의 대출 정보만 조회 가능. DISPONENT로 연결된 계좌의 대출은 명의자 본인의 신용평가에 묶여 있으므로 row_filter에 의해 제외됨. 내부 계좌 ID는 접근 불가."
+          "description_ko": "본인이 OWNER로 연결된 계좌의 대출 정보만 조회 가능. DISPONENT로 연결된 계좌의 대출은 명의자 본인의 신용평가에 묶여 있으므로 row_filter에 의해 제외됨. 내부 계좌 ID는 접근 불가.",
+          "description_en": "Can only view loan information for accounts where the customer is linked as OWNER. Loans for accounts linked as DISPONENT are excluded by the row filter since they are tied to the account holder's credit evaluation. Internal account ID is not accessible."
         },
         "order": {
-          "allowed_operations": ["SELECT"],
-          "allowed_columns": ["order_id", "bank_to", "account_to", "amount", "k_symbol"],
-          "denied_columns": ["account_id"],
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "order_id",
+            "bank_to",
+            "account_to",
+            "amount",
+            "k_symbol"
+          ],
+          "denied_columns": [
+            "account_id"
+          ],
           "row_filter": "account_id IN (SELECT account_id FROM disp WHERE client_id = {current_user_client_id})",
-          "description": "본인 자동이체 내역만 조회. 내부 계좌 ID는 접근 불가."
+          "description_ko": "본인 자동이체 내역만 조회. 내부 계좌 ID는 접근 불가.",
+          "description_en": "Can only view own standing order records. Internal account ID is not accessible."
         },
         "trans": {
-          "allowed_operations": ["SELECT"],
-          "allowed_columns": ["trans_id", "date", "type", "operation", "amount", "balance", "k_symbol"],
-          "denied_columns": ["account_id", "bank", "account"],
+          "allowed_operations": [
+            "SELECT"
+          ],
+          "allowed_columns": [
+            "trans_id",
+            "date",
+            "type",
+            "operation",
+            "amount",
+            "balance",
+            "k_symbol"
+          ],
+          "denied_columns": [
+            "account_id",
+            "bank",
+            "account"
+          ],
           "row_filter": "account_id IN (SELECT account_id FROM disp WHERE client_id = {current_user_client_id})",
-          "description": "본인 거래 내역만 조회. 거래 상대방 은행·계좌 정보 및 내부 계좌 ID는 접근 불가."
+          "description_ko": "본인 거래 내역만 조회. 거래 상대방 은행·계좌 정보 및 내부 계좌 ID는 접근 불가.",
+          "description_en": "Can only view own transaction records. Counterparty bank/account information and internal account ID are not accessible."
         }
       }
     }
