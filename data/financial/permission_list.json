@@ -570,11 +570,11 @@
           "description": "본인 소유 계좌 정보만 조회 가능. 지점 내부 코드(district_id)는 접근 불가."
         },
         "disp": {
-          "allowed_operations": [],
-          "allowed_columns": [],
-          "denied_columns": ["disp_id", "client_id", "account_id", "type"],
-          "row_filter": null,
-          "description": "접근 불가. 계좌-고객 연결 체계는 내부 관리용."
+          "allowed_operations": ["SELECT"],
+          "allowed_columns": ["disp_id", "client_id", "account_id", "type"],
+          "denied_columns": [],
+          "row_filter": "client_id = {current_user_client_id}",
+          "description": "본인의 계좌-고객 연결 정보만 조회 가능. 타인의 disposition 레코드는 행 수준 필터에 의해 차단."
         },
         "card": {
           "allowed_operations": ["SELECT"],

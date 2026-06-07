@@ -723,9 +723,9 @@
         "scenario_ko": "내 계좌에 연결된 다른 사용자(공동명의자)가 누구인지 알려줘.",
         "scenario_en": "Tell me who else is linked to my account as a joint holder or authorized user.",
         "expected_result": "DENY",
-        "category": "denied_table",
-        "reason_ko": "customer는 disp 테이블에 대한 접근 권한이 전혀 없음. 계좌-고객 연결 정보는 내부 관리용.",
-        "reason_en": "Customer has no access to the disp table at all. Account-client linkage information is for internal management only."
+        "category": "denied_row_filter",
+        "reason_ko": "customer는 disp 테이블에서 본인 행(client_id = 본인)만 조회 가능. 동일 계좌에 연결된 타인의 disposition 레코드는 행 수준 필터에 의해 차단.",
+        "reason_en": "Customer can only view their own rows in the disp table (client_id = self). Other clients' disposition records linked to the same account are blocked by the row-level filter."
       }
     ]
   }
