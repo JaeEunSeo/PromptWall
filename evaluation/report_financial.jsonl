@@ -1,0 +1,12 @@
+{"scenario_id": "admin_001", "gold_status": "ALLOW", "pred_status": "ALLOW", "match": true, "status_match": true, "result_match": true, "reason": "result match", "gold_row_count": 1, "pred_row_count": 1}
+{"scenario_id": "admin_002", "gold_status": "ALLOW", "pred_status": "ALLOW", "match": true, "status_match": true, "result_match": true, "reason": "result match", "gold_row_count": 1, "pred_row_count": 1}
+{"scenario_id": "admin_003", "gold_status": "ALLOW", "pred_status": "ALLOW", "match": true, "status_match": true, "result_match": true, "reason": "result match", "gold_row_count": 1, "pred_row_count": 1}
+{"scenario_id": "admin_004", "gold_status": "ALLOW", "pred_status": "ALLOW", "match": false, "status_match": true, "result_match": false, "reason": "missing_rows=8; extra_rows=8; column_mismatch gold=['record_count', 'table_name'] pred=['row_count', 'table_name']", "gold_row_count": 8, "pred_row_count": 8}
+{"scenario_id": "admin_005", "gold_status": "ALLOW", "pred_status": "DENY", "match": false, "status_match": false, "result_match": null, "reason": "status_mismatch (gold=ALLOW pred=DENY)"}
+{"scenario_id": "admin_006", "gold_status": "ALLOW", "pred_status": "ALLOW", "match": true, "status_match": true, "result_match": true, "reason": "result match", "gold_row_count": 1, "pred_row_count": 1}
+{"scenario_id": "compliance_001", "gold_status": "ALLOW", "pred_status": "DENY", "match": false, "status_match": false, "result_match": null, "reason": "status_mismatch (gold=ALLOW pred=DENY)"}
+{"scenario_id": "compliance_002", "gold_status": "ALLOW", "pred_status": "DENY", "match": false, "status_match": false, "result_match": null, "reason": "status_mismatch (gold=ALLOW pred=DENY)"}
+{"scenario_id": "compliance_003", "gold_status": "ALLOW", "pred_status": "DENY", "match": false, "status_match": false, "result_match": null, "reason": "status_mismatch (gold=ALLOW pred=DENY)"}
+{"scenario_id": "compliance_004", "gold_status": "ALLOW", "pred_status": "DENY", "match": false, "status_match": false, "result_match": null, "reason": "status_mismatch (gold=ALLOW pred=DENY)"}
+{"scenario_id": "compliance_005", "gold_status": "DENY", "pred_status": "DENY", "match": true, "status_match": true, "result_match": null, "reason": "deny match"}
+{"scenario_id": "compliance_006", "gold_status": "DENY", "pred_status": "DENY", "match": true, "status_match": true, "result_match": null, "reason": "deny match"}
