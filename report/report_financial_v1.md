@@ -71,13 +71,13 @@
 
 |  | Pred ALLOW | Pred DENY | Pred ERROR |
 |---|---|---|---|
-| **Gold ALLOW** | 23 | 19 | 1 |
-| **Gold DENY** | 1 | 27 | 0 |
+| **Gold ALLOW** | 21 | 22 | 0 |
+| **Gold DENY** | 1 | 26 | 1 |
 
-- **정밀도(Precision)**: ALLOW로 예측한 24건 중 23건이 실제 ALLOW → 95.8%
-- **재현율(Recall)**: 실제 ALLOW 43건 중 23건만 ALLOW로 예측 → 53.5%
-- **DENY 정밀도**: DENY로 예측한 46건 중 27건이 실제 DENY → 58.7% (False Deny가 19건 섞임)
-- **DENY 재현율**: 실제 DENY 28건 중 27건을 DENY로 예측 → 96.4%
+- **ALLOW 정밀도(Precision)**: ALLOW로 예측한 22건 중 21건이 실제 ALLOW → 95.5%
+- **ALLOW 재현율(Recall)**: 실제 ALLOW 43건 중 21건만 ALLOW로 예측 → 48.8%
+- **DENY 정밀도**: DENY로 예측한 48건 중 26건이 실제 DENY → 54.2% (False Deny 22건 섞임)
+- **DENY 재현율**: 실제 DENY 28건 중 26건을 DENY로 예측 → 92.9%
 
 LLM은 **보수적 전략**을 택하고 있다: 거부는 잘 하지만, 허용해야 할 때도 거부한다.
 
