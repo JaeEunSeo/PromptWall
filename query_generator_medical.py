@@ -140,22 +140,51 @@ def predict_record(role: str, request: str, scenario_id: str | None = None,
     return {"scenario_id": scenario_id, **result}
 
 
+def _load_scenarios(batch_path: Path) -> list[dict]:
+    """배치 입력을 평탄한 시나리오 리스트로 로드.
+
+    지원 포맷:
+      - 중첩 단일 JSON (scenarios_medical.json): {"metadata":..., "scenarios": {role: [..]}}
+      - JSON 배열
+      - JSONL (gold_queries_medical.json): 한 줄에 하나
+    """
+    text = batch_path.read_text(encoding="utf-8").strip()
+    try:
+        obj = json.loads(text)
+    except json.JSONDecodeError:
+        return [json.loads(l) for l in text.splitlines() if l.strip()]  # JSONL
+    if isinstance(obj, dict) and "scenarios" in obj:
+        scen = obj["scenarios"]
+        if isinstance(scen, dict):
+            items: list[dict] = []
+            for role_items in scen.values():
+                items.extend(role_items)
+            return items
+        if isinstance(scen, list):
+            return scen
+    if isinstance(obj, list):
+        return obj
+    return [obj]
+
+
 def run_batch(batch_path: Path, out_path: Path, *, lang: str = "ko") -> int:
-    """gold/scenario JSONL을 읽어 모든 항목에 대해 예측을 만들고 JSONL로 저장."""
+    """scenarios_medical.json(중첩 JSON) 또는 JSONL을 읽어 모든 항목의 예측을 JSONL로 저장."""
     client = OpenAI()
-    req_key = "request_ko" if lang == "ko" else "request_en"
+    # 요청 텍스트 필드: scenario_ko/scenario_en(시나리오 파일) 또는 request_ko/request_en(gold 파일) 모두 지원
+    pref = (("scenario_ko", "request_ko") if lang == "ko"
+            else ("scenario_en", "request_en"))
+    fallbacks = ("scenario_ko", "scenario_en", "request_ko", "request_en")
+
+    items = _load_scenarios(batch_path)
     n = 0
-    with open(batch_path, encoding="utf-8") as fin, \
-         open(out_path, "w", encoding="utf-8") as fout:
-        for line in fin:
-            line = line.strip()
-            if not line:
-                continue
-            item = json.loads(line)
+    with open(out_path, "w", encoding="utf-8") as fout:
+        for item in items:
             sid = item.get("scenario_id")
             role = item["role"]
-            request = item.get(req_key) or item.get("request_ko") or item.get("request_en")
+            request = next((item[k] for k in (*pref, *fallbacks) if item.get(k)), None)
             try:
+                if not request:
+                    raise ValueError("요청 텍스트(scenario_ko/scenario_en 등)를 찾을 수 없음")
                 rec = predict_record(role, request, sid, client=client)
             except Exception as e:  # 개별 실패는 레코드에 기록하고 계속
                 rec = {"scenario_id": sid, "status": "ERROR", "reason": str(e)}
