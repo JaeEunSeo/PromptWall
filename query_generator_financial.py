@@ -17,7 +17,7 @@ Policy-Aware SQL Query Generator (금융 도메인) — 단건 / 배치 모드 �
   python query_generator_financial.py \
       --batch data/financial/scenario_gold_query.json \
       --out predictions.jsonl \
-      --current-user-client-id 116
+      --current-user-client-id 1
 
 선행 준비:
   pip install openai

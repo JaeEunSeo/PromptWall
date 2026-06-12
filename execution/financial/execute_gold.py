@@ -1,6 +1,6 @@
 """
 사용법:
-python3 execution/execute_gold.py --current-user-client-id 1
+python3 execute_gold.py --current-user-client-id 1
 """
 #!/usr/bin/env python3
 from __future__ import annotations
@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any
 
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DEFAULT_SCENARIO_PATH = PROJECT_ROOT / "data" / "financial" / "scenario_gold_query.json"
 DEFAULT_DB_PATH = PROJECT_ROOT / "data" / "financial" / "financial.sqlite"
 DEFAULT_OUTPUT_PATH = PROJECT_ROOT / "execution" / "financial" / "execute_gold_results.json"

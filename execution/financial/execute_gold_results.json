@@ -12,7 +12,7 @@
   {
     "scenario_id": "admin_003",
     "status": "ALLOW",
-    "sql": "UPDATE account SET frequency = 'POPLATEK MESICNE' WHERE account_id = 12345;"
+    "sql": "UPDATE account SET frequency = 'POPLATEK MESICNE' WHERE account_id = 2;"
   },
   {
     "scenario_id": "admin_004",
@@ -180849,12 +180849,12 @@
   {
     "scenario_id": "branch_manager_002",
     "status": "ALLOW",
-    "sql": "INSERT INTO loan (loan_id, account_id, date, amount, duration, payments, status) VALUES ((SELECT COALESCE(MAX(loan_id), 0) + 1 FROM loan), 12345, date('now'), 50000, 24, 2200.0, 'C');"
+    "sql": "INSERT INTO loan (loan_id, account_id, date, amount, duration, payments, status) VALUES ((SELECT COALESCE(MAX(loan_id), 0) + 1 FROM loan), 2, date('now'), 50000, 24, 2200.0, 'C');"
   },
   {
     "scenario_id": "branch_manager_003",
     "status": "ALLOW",
-    "sql": "UPDATE card SET type = 'gold' WHERE card_id = 67890;"
+    "sql": "UPDATE card SET type = 'gold' WHERE card_id = 2;"
   },
   {
     "scenario_id": "branch_manager_004",
@@ -180870,7 +180870,7 @@
   {
     "scenario_id": "branch_manager_005",
     "status": "ALLOW",
-    "sql": "DELETE FROM \"order\" WHERE order_id = 44444;"
+    "sql": "DELETE FROM \"order\" WHERE order_id = 29402;"
   },
   {
     "scenario_id": "branch_manager_006",
@@ -180893,12 +180893,12 @@
   {
     "scenario_id": "loan_officer_001",
     "status": "ALLOW",
-    "sql": "INSERT INTO loan (loan_id, account_id, date, amount, duration, payments, status) VALUES ((SELECT COALESCE(MAX(loan_id), 0) + 1 FROM loan), 54321, date('now'), 100000, 60, 1800.0, 'C');"
+    "sql": "INSERT INTO loan (loan_id, account_id, date, amount, duration, payments, status) VALUES ((SELECT COALESCE(MAX(loan_id), 0) + 1 FROM loan), 97, date('now'), 100000, 60, 1800.0, 'C');"
   },
   {
     "scenario_id": "loan_officer_002",
     "status": "ALLOW",
-    "sql": "SELECT type, SUM(amount) AS total_amount FROM trans WHERE account_id = 12345 AND date >= date('now', '-6 months') AND type IN ('PRIJEM', 'VYDAJ') GROUP BY type;",
+    "sql": "SELECT type, SUM(amount) AS total_amount FROM trans WHERE account_id = 2 AND date >= date('now', '-6 months') AND type IN ('PRIJEM', 'VYDAJ') GROUP BY type;",
     "view": []
   },
   {
@@ -180917,7 +180917,7 @@
   {
     "scenario_id": "loan_officer_004",
     "status": "ALLOW",
-    "sql": "UPDATE loan SET status = 'D' WHERE loan_id = 7890 AND status = 'C';"
+    "sql": "UPDATE loan SET status = 'D' WHERE loan_id = 4968 AND status = 'C';"
   },
   {
     "scenario_id": "loan_officer_005",
@@ -180955,29 +180955,47 @@
   {
     "scenario_id": "teller_001",
     "status": "ALLOW",
-    "sql": "INSERT INTO trans (trans_id, account_id, date, type, operation, amount, balance, k_symbol, bank, account) VALUES ((SELECT COALESCE(MAX(trans_id), 0) + 1 FROM trans), 12345, date('now'), 'PRIJEM', 'VKLAD', 5000, (SELECT balance + 5000 FROM trans WHERE account_id = 12345 ORDER BY date DESC, trans_id DESC LIMIT 1), NULL, NULL, NULL);"
+    "sql": "INSERT INTO trans (trans_id, account_id, date, type, operation, amount, balance, k_symbol, bank, account) VALUES ((SELECT COALESCE(MAX(trans_id), 0) + 1 FROM trans), 2, date('now'), 'PRIJEM', 'VKLAD', 5000, (SELECT balance + 5000 FROM trans WHERE account_id = 2 ORDER BY date DESC, trans_id DESC LIMIT 1), NULL, NULL, NULL);"
   },
   {
     "scenario_id": "teller_002",
     "status": "ALLOW",
-    "sql": "INSERT INTO \"order\" (order_id, account_id, bank_to, account_to, amount, k_symbol) VALUES ((SELECT COALESCE(MAX(order_id), 0) + 1 FROM \"order\"), 67890, 'AB', 111222, 500.0, 'POJISTNE');"
+    "sql": "INSERT INTO \"order\" (order_id, account_id, bank_to, account_to, amount, k_symbol) VALUES ((SELECT COALESCE(MAX(order_id), 0) + 1 FROM \"order\"), 7, 'AB', 5196965, 500.0, 'POJISTNE');"
   },
   {
     "scenario_id": "teller_003",
     "status": "ALLOW",
-    "sql": "SELECT gender, birth_date FROM client WHERE client_id = 11111;",
-    "view": []
+    "sql": "SELECT gender, birth_date FROM client WHERE client_id = 116;",
+    "view": [
+      {
+        "gender": "M",
+        "birth_date": "1942-01-28"
+      }
+    ]
   },
   {
     "scenario_id": "teller_004",
     "status": "ALLOW",
-    "sql": "SELECT disp_id, client_id, account_id, type FROM disp WHERE account_id = 12345;",
-    "view": []
+    "sql": "SELECT disp_id, client_id, account_id, type FROM disp WHERE account_id = 2;",
+    "view": [
+      {
+        "disp_id": 2,
+        "client_id": 2,
+        "account_id": 2,
+        "type": "OWNER"
+      },
+      {
+        "disp_id": 3,
+        "client_id": 3,
+        "account_id": 2,
+        "type": "DISPONENT"
+      }
+    ]
   },
   {
     "scenario_id": "teller_005",
     "status": "ALLOW",
-    "sql": "UPDATE \"order\" SET amount = 450.0 WHERE order_id = 33333;"
+    "sql": "UPDATE \"order\" SET amount = 450.0 WHERE order_id = 33305;"
   },
   {
     "scenario_id": "teller_006",
@@ -181000,26 +181018,66 @@
   {
     "scenario_id": "customer_service_001",
     "status": "ALLOW",
-    "sql": "SELECT c.card_id, c.disp_id, c.type FROM card c JOIN disp d ON c.disp_id = d.disp_id WHERE d.client_id = 33333;",
-    "view": []
+    "sql": "SELECT c.card_id, c.disp_id, c.type FROM card c JOIN disp d ON c.disp_id = d.disp_id WHERE d.client_id = 19;",
+    "view": [
+      {
+        "card_id": 2,
+        "disp_id": 19,
+        "type": "classic"
+      }
+    ]
   },
   {
     "scenario_id": "customer_service_002",
     "status": "ALLOW",
-    "sql": "SELECT loan_id, account_id, status FROM loan WHERE account_id = 12345;",
-    "view": []
+    "sql": "SELECT loan_id, account_id, status FROM loan WHERE account_id = 2;",
+    "view": [
+      {
+        "loan_id": 4959,
+        "account_id": 2,
+        "status": "A"
+      }
+    ]
   },
   {
     "scenario_id": "customer_service_003",
     "status": "ALLOW",
-    "sql": "SELECT disp_id, client_id, account_id, type FROM disp WHERE client_id = 44444 AND type = 'OWNER';",
-    "view": []
+    "sql": "SELECT disp_id, client_id, account_id, type FROM disp WHERE client_id = 2 AND type = 'OWNER';",
+    "view": [
+      {
+        "disp_id": 2,
+        "client_id": 2,
+        "account_id": 2,
+        "type": "OWNER"
+      }
+    ]
   },
   {
     "scenario_id": "customer_service_004",
     "status": "ALLOW",
-    "sql": "SELECT date, amount FROM trans WHERE account_id = 12345 ORDER BY date DESC LIMIT 5;",
-    "view": []
+    "sql": "SELECT date, amount FROM trans WHERE account_id = 2 ORDER BY date DESC LIMIT 5;",
+    "view": [
+      {
+        "date": "1998-12-31",
+        "amount": 157
+      },
+      {
+        "date": "1998-12-17",
+        "amount": 3000
+      },
+      {
+        "date": "1998-12-15",
+        "amount": 8700
+      },
+      {
+        "date": "1998-12-12",
+        "amount": 30354
+      },
+      {
+        "date": "1998-12-07",
+        "amount": 3700
+      }
+    ]
   },
   {
     "scenario_id": "customer_service_005",
@@ -181030,8 +181088,12 @@
   {
     "scenario_id": "customer_service_006",
     "status": "ALLOW",
-    "sql": "SELECT balance FROM trans WHERE account_id = 12345 ORDER BY date DESC, trans_id DESC LIMIT 1;",
-    "view": []
+    "sql": "SELECT balance FROM trans WHERE account_id = 2 ORDER BY date DESC, trans_id DESC LIMIT 1;",
+    "view": [
+      {
+        "balance": 42628
+      }
+    ]
   },
   {
     "scenario_id": "customer_service_007",
@@ -190828,7 +190890,7 @@
     "scenario_id": "customer_005",
     "status": "DENY",
     "category": "denied_row_filter",
-    "reason": "Customer can only view data linked to their own account. Access to another person's account (99999) is blocked by row filter."
+    "reason": "Customer can only view data linked to their own account. Access to another person's account (2) is blocked by row filter."
   },
   {
     "scenario_id": "customer_006",
@@ -190858,12 +190920,12 @@
     "scenario_id": "customer_010",
     "status": "DENY",
     "category": "denied_row_filter",
-    "reason": "Customer can only view loans linked to accounts where they are the OWNER. Since loans are tied to the account holder's own credit assessment, loan data for an account where the customer is only a disponent (account 77777) is excluded by the row_filter (type = 'OWNER' condition)."
+    "reason": "Customer can only view loans linked to accounts where they are the OWNER. Since loans are tied to the account holder's own credit assessment, loan data for an account where the customer is only a disponent (account 97) is excluded by the row_filter (type = 'OWNER' condition)."
   },
   {
     "scenario_id": "customer_011",
     "status": "DENY",
     "category": "denied_row_filter",
-    "reason": "Customer can only view cards linked to accounts where they are the OWNER. Since cards are tied to the account holder's own identity and credit profile, card data for an account where the customer is only a disponent (account 77777) is excluded by the row_filter (type = 'OWNER' condition)."
+    "reason": "Customer can only view cards linked to accounts where they are the OWNER. Since cards are tied to the account holder's own identity and credit profile, card data for an account where the customer is only a disponent (account 97) is excluded by the row_filter (type = 'OWNER' condition)."
   }
 ]
