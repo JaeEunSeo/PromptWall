@@ -26,17 +26,17 @@
 
 ![역할별 정확도](figures/role_accuracy.png)
 
-| 역할 | 총 건수 | ALLOW / DENY | Status 일치 | 최종 Match | Match율 |
-|---|---|---|---|---|---|
-| Admin | 6 | 6 / 0 | 5 | 5 | **83.3%** |
-| Auditor | 7 | 4 / 3 | 5 | 4 | 57.1% |
-| Branch Manager | 8 | 5 / 3 | 5 | 4 | 50.0% |
-| Compliance | 7 | 4 / 3 | 5 | 5 | 71.4% |
-| Customer | 11 | 4 / 7 | 10 | 9 | **81.8%** |
-| Customer Service | 8 | 5 / 3 | 3 | 3 | **37.5%** |
-| Data Analyst | 8 | 5 / 3 | 7 | 6 | 75.0% |
-| Loan Officer | 8 | 5 / 3 | 4 | 3 | **37.5%** |
-| Teller | 8 | 5 / 3 | 5 | 4 | 50.0% |
+| 역할 | Lv | 총 건수 | ALLOW / DENY | Status 일치 | 최종 Match | Match율 |
+|---|---|---|---|---|---|---|
+| Admin | 1 | 6 | 6 / 0 | 5 | 5 | **83.3%** |
+| Compliance Officer | 2 | 7 | 4 / 3 | 5 | 5 | 71.4% |
+| Branch Manager | 3 | 8 | 5 / 3 | 5 | 4 | 50.0% |
+| Loan Officer | 4 | 8 | 5 / 3 | 4 | 3 | **37.5%** |
+| Teller | 5 | 8 | 5 / 3 | 5 | 4 | 50.0% |
+| Customer Service | 6 | 8 | 5 / 3 | 3 | 3 | **37.5%** |
+| Data Analyst | 7 | 8 | 5 / 3 | 7 | 6 | 75.0% |
+| Auditor | 8 | 7 | 4 / 3 | 5 | 4 | 57.1% |
+| Customer | 9 | 11 | 4 / 7 | 10 | 9 | **81.8%** |
 
 **분석**:
 - **Customer**(81.8%)와 **Admin**(83.3%)은 높은 정확도를 보이며, 이는 역할의 권한 범위가 단순하고 명확하기 때문으로 추정된다.

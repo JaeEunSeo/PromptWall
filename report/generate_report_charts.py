@@ -23,12 +23,12 @@ plt.rcParams.update({
 })
 
 ROLE_ORDER = [
-    "admin", "auditor", "branch_manager", "compliance",
-    "customer", "customer_service", "data_analyst", "loan_officer", "teller",
+    "admin", "compliance", "branch_manager", "loan_officer",
+    "teller", "customer_service", "data_analyst", "auditor", "customer",
 ]
 ROLE_LABELS = [
-    "Admin", "Auditor", "Branch Mgr", "Compliance",
-    "Customer", "Cust. Service", "Data Analyst", "Loan Officer", "Teller",
+    "Admin (Lv1)", "Compliance (Lv2)", "Branch Mgr (Lv3)", "Loan Officer (Lv4)",
+    "Teller (Lv5)", "Cust. Service (Lv6)", "Data Analyst (Lv7)", "Auditor (Lv8)", "Customer (Lv9)",
 ]
 
 
