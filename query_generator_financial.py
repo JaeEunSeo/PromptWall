@@ -42,6 +42,7 @@ from openai import OpenAI
 PROJECT_ROOT = Path(__file__).resolve().parent
 load_dotenv(PROJECT_ROOT / ".env")
 DEFAULT_PROMPT_PATH = PROJECT_ROOT / "prompt" / "query_generator_financial.txt"
+DEFAULT_PROMPT_PATH_V2 = PROJECT_ROOT / "prompt_v2" / "query_generator_financial.txt"
 DEFAULT_PERMISSION_PATH = PROJECT_ROOT / "data" / "financial" / "permission_list.json"
 DEFAULT_SCENARIO_PATH = PROJECT_ROOT / "data" / "financial" / "scenario_gold_query.json"
 DEFAULT_DB_PATH = PROJECT_ROOT / "data" / "financial" / "financial.sqlite"
@@ -55,11 +56,44 @@ def load_text(path: Path) -> str:
     return path.read_text(encoding="utf-8").strip()
 
 
+def load_permissions(path: Path) -> dict[str, Any]:
+    """권한 JSON 파일 전체를 로드한다."""
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
 def load_permission_prompt(path: Path) -> str:
-    """권한 JSON 파일을 읽어 시스템 프롬프트용 문자열로 반환한다."""
-    permissions: dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
+    """권한 JSON 파일을 읽어 시스템 프롬프트용 문자열로 반환한다 (v1: 전체 role 포함)."""
+    permissions = load_permissions(path)
     permission_json = json.dumps(permissions, ensure_ascii=False, indent=2)
     return f"Permission List:\n{permission_json}"
+
+
+def get_role_permissions(permissions: dict[str, Any], role: str) -> dict[str, Any]:
+    """요청 role의 권한 블록(table_permissions 포함)만 반환한다."""
+    roles = permissions.get("roles", {})
+    if role not in roles:
+        available = ", ".join(sorted(roles))
+        raise ValueError(f"알 수 없는 role: '{role}'.\n사용 가능한 role: {available}")
+    return roles[role]
+
+
+def build_role_permission_json(permissions: dict[str, Any], role: str) -> str:
+    """요청 role의 권한 블록만 JSON 문자열로 직렬화한다 (v2: user 메시지용)."""
+    return json.dumps(get_role_permissions(permissions, role), ensure_ascii=False, indent=2)
+
+
+def build_user_message_v1(user_role: str, user_request: str) -> str:
+    """v1: User Role + User Request만 포함한 user 메시지를 구성한다."""
+    return f"User Role: {user_role}\nUser Request: {user_request}"
+
+
+def build_user_message_v2(user_role: str, user_request: str, role_permission_json: str) -> str:
+    """v2: User Role + User Request + 요청 role의 Permission List를 포함한 user 메시지를 구성한다."""
+    return (
+        f"User Role: {user_role}\n"
+        f"User Request: {user_request}\n"
+        f"Permission List:\n{role_permission_json}"
+    )
 
 
 def build_runtime_placeholder_prompt(current_user_client_id: int | None) -> str | None:
@@ -207,31 +241,49 @@ def generate_sql(
     model: str,
     current_user_client_id: int | None = None,
     db_path: Path = DEFAULT_DB_PATH,
-    prompt_path: Path = DEFAULT_PROMPT_PATH,
+    prompt_path: Path | None = None,
     permission_path: Path = DEFAULT_PERMISSION_PATH,
+    prompt_version: str = "v1",
     scenario_id: str | None = None,
     client: OpenAI | None = None,
 ) -> dict[str, Any]:
     """LLM을 호출하여 정책 인지 SQL을 생성하고, 결과 딕셔너리를 반환한다."""
+    if prompt_version not in ("v1", "v2"):
+        raise ValueError(f"알 수 없는 prompt_version: '{prompt_version}'. 'v1' 또는 'v2'를 사용하세요.")
     validate_runtime_context(user_role, current_user_client_id)
 
     client = client or OpenAI()
+    if prompt_path is None:
+        prompt_path = DEFAULT_PROMPT_PATH_V2 if prompt_version == "v2" else DEFAULT_PROMPT_PATH
+
     query_generator_prompt = load_text(prompt_path)
-    permission_prompt = load_permission_prompt(permission_path)
     runtime_placeholder_prompt = build_runtime_placeholder_prompt(current_user_client_id)
 
-    messages = [
+    messages: list[dict[str, str]] = [
         {"role": "system", "content": query_generator_prompt},
-        {"role": "system", "content": permission_prompt},
     ]
-    if runtime_placeholder_prompt is not None:
-        messages.append({"role": "system", "content": runtime_placeholder_prompt})
-    messages.append(
-        {
-            "role": "user",
-            "content": f"User Role: {user_role}\nUser Request: {user_request}",
-        }
-    )
+
+    if prompt_version == "v2":
+        permissions = load_permissions(permission_path)
+        role_permission_json = build_role_permission_json(permissions, user_role)
+        if runtime_placeholder_prompt is not None:
+            messages.append({"role": "system", "content": runtime_placeholder_prompt})
+        messages.append(
+            {
+                "role": "user",
+                "content": build_user_message_v2(user_role, user_request, role_permission_json),
+            }
+        )
+    else:
+        messages.append({"role": "system", "content": load_permission_prompt(permission_path)})
+        if runtime_placeholder_prompt is not None:
+            messages.append({"role": "system", "content": runtime_placeholder_prompt})
+        messages.append(
+            {
+                "role": "user",
+                "content": build_user_message_v1(user_role, user_request),
+            }
+        )
 
     response = client.chat.completions.create(
         model=model,
@@ -290,8 +342,9 @@ def run_batch(
     lang: str = "ko",
     current_user_client_id: int | None = None,
     db_path: Path = DEFAULT_DB_PATH,
-    prompt_path: Path = DEFAULT_PROMPT_PATH,
+    prompt_path: Path | None = None,
     permission_path: Path = DEFAULT_PERMISSION_PATH,
+    prompt_version: str = "v1",
 ) -> int:
     """시나리오 파일의 모든 항목에 대해 LLM 예측을 생성하고 JSONL로 저장한다."""
     client = OpenAI()
@@ -320,6 +373,7 @@ def run_batch(
                     db_path=db_path,
                     prompt_path=prompt_path,
                     permission_path=permission_path,
+                    prompt_version=prompt_version,
                     scenario_id=sid,
                     client=client,
                 )
@@ -361,12 +415,18 @@ def parse_args() -> argparse.Namespace:
         help="ALLOW SELECT 실행에 사용할 SQLite DB 경로",
     )
     parser.add_argument(
-        "--prompt-path", type=Path, default=DEFAULT_PROMPT_PATH,
-        help="시스템 프롬프트 파일 경로",
+        "--prompt-path", type=Path, default=None,
+        help="시스템 프롬프트 파일 경로 (기본: --prompt-version에 따라 prompt/ 또는 prompt_v2/의 "
+             "query_generator_financial.txt)",
     )
     parser.add_argument(
         "--permission-path", type=Path, default=DEFAULT_PERMISSION_PATH,
         help="권한 JSON 파일 경로",
+    )
+    parser.add_argument(
+        "--prompt-version", choices=["v1", "v2"], default="v1",
+        help="프롬프트 버전: v1=기존 동작(전체 권한 JSON을 별도 system 메시지로 전달), "
+             "v2=요청 role의 권한만 user 메시지에 포함하고 DDL 기반 system 프롬프트 사용",
     )
     parser.add_argument(
         "--batch", type=Path, default=None,
@@ -401,6 +461,7 @@ def main() -> int:
                 db_path=args.db,
                 prompt_path=args.prompt_path,
                 permission_path=args.permission_path,
+                prompt_version=args.prompt_version,
             )
         except openai.AuthenticationError:
             print("인증 실패: OPENAI_API_KEY를 확인하세요.", file=sys.stderr)
@@ -426,6 +487,7 @@ def main() -> int:
             db_path=args.db,
             prompt_path=args.prompt_path,
             permission_path=args.permission_path,
+            prompt_version=args.prompt_version,
             scenario_id=args.scenario_id,
         )
     except ValueError as e:
