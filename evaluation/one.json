@@ -1,6 +1,0 @@
-{
-  "scenario_id": "nurse_001",
-  "status": "DENY",
-  "category": "denied_operation",
-  "reason": "INSERT operation on observations is not allowed."
-}

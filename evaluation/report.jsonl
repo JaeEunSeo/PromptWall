@@ -1,1 +1,0 @@
-{"scenario_id": "nurse_001", "gold_status": "ALLOW", "pred_status": "DENY", "match": false, "status_match": false, "result_match": null, "reason": "status_mismatch (gold=ALLOW pred=DENY)"}
